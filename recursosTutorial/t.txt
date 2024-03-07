@@ -1,0 +1,412 @@
+CREATE DATABASE dbGestorRecetas;
+GO
+
+USE dbGestorRecetas;
+GO
+
+CREATE TABLE tblRecetas (
+    IdReceta INT PRIMARY KEY IDENTITY,
+    Nombre VARCHAR(100) NOT NULL,
+    Descripcion TEXT,
+    TiempoPreparacion INT,
+    Dificultad INT,
+    Imagen image,
+    FechaModificacion DATE
+);
+GO
+
+CREATE TABLE tblIngredientes (
+    IdIngrediente INT PRIMARY KEY IDENTITY,
+    Nombre VARCHAR(50) NOT NULL,
+    UnidadMedida VARCHAR(10) NOT NULL
+);
+GO
+
+CREATE TABLE tblRecetasIngredientes (
+    IdReceta INT FOREIGN KEY REFERENCES tblRecetas(IdReceta),
+    IdIngrediente INT FOREIGN KEY REFERENCES tblIngredientes(IdIngrediente),
+    Cantidad decimal(18,2) NOT NULL
+);
+GO
+
+CREATE TABLE tblPasos (
+    IdPaso INT PRIMARY KEY IDENTITY,
+    IdReceta INT FOREIGN KEY REFERENCES tblRecetas(IdReceta),
+    NumeroPaso INT NOT NULL,
+    Descripcion TEXT NOT NULL
+);
+GO
+
+CREATE TABLE tblCategorias (
+    IdCategoria INT PRIMARY KEY IDENTITY,
+    Nombre VARCHAR(50) NOT NULL
+);
+GO
+
+CREATE TABLE tblRecetasCategorias (
+    IdReceta INT FOREIGN KEY REFERENCES tblRecetas(IdReceta),
+    IdCategoria INT FOREIGN KEY REFERENCES tblCategorias(IdCategoria)
+);
+GO
+
+
+-- Procedimientos para la gestión de recetas:
+-- Obtener recetas: Obtener una lista de todas las recetas.
+CREATE PROCEDURE ObtenerRecetas
+AS
+BEGIN
+    SELECT * FROM tblRecetas;
+END;
+GO
+-- Obtener receta por ID: Obtener la información de una receta específica.
+CREATE PROCEDURE ObtenerRecetaPorID
+    @IdReceta INT
+AS
+BEGIN
+    SELECT * FROM tblRecetas WHERE IdReceta = @IdReceta;
+END;
+GO
+-- Agregar receta: Crear una nueva receta, tomar en cuenta la posibilidad de enviar las categorías a la que pertenece la receta
+CREATE PROCEDURE AgregarReceta
+    @Nombre VARCHAR(100),
+    @Descripcion TEXT,
+    @TiempoPreparacion INT,
+    @Dificultad INT,
+    @Imagen IMAGE,
+    @FechaModificacion DATE
+AS
+BEGIN
+    INSERT INTO tblRecetas (Nombre, Descripcion, TiempoPreparacion, Dificultad, Imagen, FechaModificacion)
+    VALUES (@Nombre, @Descripcion, @TiempoPreparacion, @Dificultad, @Imagen, @FechaModificacion);
+END;
+GO
+-- Editar receta: Modificar la información de una receta existente.
+CREATE PROCEDURE EditarReceta
+    @IdReceta INT,
+    @Nombre VARCHAR(100),
+    @Descripcion TEXT,
+    @TiempoPreparacion INT,
+    @Dificultad INT,
+    @Imagen IMAGE,
+    @FechaModificacion DATE
+AS
+BEGIN
+    UPDATE tblRecetas
+    SET Nombre = @Nombre, Descripcion = @Descripcion, TiempoPreparacion = @TiempoPreparacion, Dificultad = @Dificultad, Imagen = @Imagen, FechaModificacion = @FechaModificacion
+    WHERE IdReceta = @IdReceta;
+END;
+GO
+-- Eliminar recetas: Eliminar una receta del sistema.
+CREATE PROCEDURE EliminarReceta
+    @IdReceta INT
+AS
+BEGIN
+    DELETE FROM tblRecetas WHERE IdReceta = @IdReceta;
+END;
+GO
+
+-- Filtro ejemplo adaptarlo segun se necesite ---
+-- Procedimiento  Consultar Producto con filtros
+CREATE or ALTER PROCEDURE sp_ConsultarProducto
+@idProveedor INT = NULL,
+@idCategoria INT = NULL,
+@nombre VARCHAR(40) = NULL
+AS 
+BEGIN
+	
+	SELECT prod.idProducto, prod.nombre [producto], prod.precio, prod.stock, prod.imagen, prod.idCategoria, cat.nombre [categoria], prod.idproveedor, prov.nombre [proveedor]
+	FROM tblProducto prod 
+	INNER JOIN tblCategoria cat ON prod.idCategoria = cat.idCategoria 
+	INNER JOIN tblProveedor prov ON prov.idProveedor = prod.idProveedor  
+	WHERE 
+		(prod.idProveedor = @idProveedor OR @idProveedor IS NULL) AND 
+		(prod.idCategoria = @idCategoria OR @idCategoria IS NULL) AND 
+		(prod.nombre LIKE '%'+@nombre+'%'OR @nombre IS NULL);
+END;
+GO
+
+-- Procedimientos para la gestión de Ingredientes:
+-- Obtener Ingredientes: Obtener una lista de todos los Ingredientes de un receta.
+CREATE PROCEDURE ObtenerIngredientesPorReceta
+    @IdReceta INT
+AS
+BEGIN
+    SELECT i.*
+    FROM tblIngredientes i
+    INNER JOIN tblRecetasIngredientes ri ON i.IdIngrediente = ri.IdIngrediente
+    WHERE ri.IdReceta = @IdReceta;
+END;
+GO
+-- Obtener Ingrediente por ID: Obtener la información de un Ingrediente específico.
+CREATE PROCEDURE ObtenerIngredientePorID
+    @IdIngrediente INT
+AS
+BEGIN
+    SELECT * FROM tblIngredientes WHERE IdIngrediente = @IdIngrediente;
+END;
+GO
+-- Agregar Ingrediente: Crear un nuevo Ingrediente.
+CREATE PROCEDURE AgregarIngrediente
+    @Nombre VARCHAR(50),
+    @UnidadMedida VARCHAR(10)
+AS
+BEGIN
+    INSERT INTO tblIngredientes (Nombre, UnidadMedida)
+    VALUES (@Nombre, @UnidadMedida);
+END;
+GO
+-- Editar Ingrediente: Modificar la información de un Ingrediente existente.
+CREATE PROCEDURE EditarIngrediente
+    @IdIngrediente INT,
+    @Nombre VARCHAR(50),
+    @UnidadMedida VARCHAR(10)
+AS
+BEGIN
+    UPDATE tblIngredientes
+    SET Nombre = @Nombre, UnidadMedida = @UnidadMedida
+    WHERE IdIngrediente = @IdIngrediente;
+END;
+GO
+-- Eliminar Ingrediente: Eliminar un Ingrediente del sistema.
+CREATE PROCEDURE EliminarIngrediente
+    @IdIngrediente INT
+AS
+BEGIN
+    DELETE FROM tblIngredientes WHERE IdIngrediente = @IdIngrediente;
+END;
+GO
+-- Procedimientos para la gestión de categorías:
+-- Obtener categorías: Obtener una lista de todas las categorías.
+CREATE PROCEDURE ObtenerCategorias
+AS
+BEGIN
+    SELECT * FROM tblCategorias;
+END;
+GO
+
+-- Obtener categoría por ID: Obtener la información de una categoría específica.
+CREATE PROCEDURE ObtenerCategoriaPorID
+    @IdCategoria INT
+AS
+BEGIN
+    SELECT * FROM tblCategorias WHERE IdCategoria = @IdCategoria;
+END;
+GO
+-- Agregar categoría: Crear una nueva categoría.
+-- Agregar categoría
+CREATE PROCEDURE AgregarCategoria
+    @Nombre VARCHAR(50)
+AS
+BEGIN
+    INSERT INTO tblCategorias (Nombre)
+    VALUES (@Nombre);
+END;
+GO
+-- Editar categoría: Modificar la información de una categoría existente.
+-- Editar categoría
+CREATE PROCEDURE EditarCategoria
+    @IdCategoria INT,
+    @Nombre VARCHAR(50)
+AS
+BEGIN
+    UPDATE tblCategorias
+    SET Nombre = @Nombre
+    WHERE IdCategoria = @IdCategoria;
+END;
+GO
+
+-- Eliminar categoría: Eliminar una categoría del sistema.
+-- Eliminar categoría
+CREATE PROCEDURE EliminarCategoria
+    @IdCategoria INT
+AS
+BEGIN
+    DELETE FROM tblCategorias WHERE IdCategoria = @IdCategoria;
+END;
+GO
+
+-- Procedimientos para la gestión de los pasos:
+-- Obtener pasos: Obtener una lista de todas las pasos de una receta concreta.
+CREATE PROCEDURE ObtenerPasosPorReceta
+    @IdReceta INT
+AS
+BEGIN
+    SELECT * FROM tblPasos WHERE IdReceta = @IdReceta;
+END;
+GO
+-- Obtener pasos por ID: Obtener la información del paso específico.
+CREATE PROCEDURE ObtenerPasoPorID
+    @IdPaso INT
+AS
+BEGIN
+    SELECT * FROM tblPasos WHERE IdPaso = @IdPaso;
+END;
+GO
+-- Agregar paso: Crear un nuevo paso para un receta concreta.
+-- Agregar paso
+CREATE PROCEDURE AgregarPaso
+    @IdReceta INT,
+    @NumeroPaso INT,
+    @Descripcion TEXT
+AS
+BEGIN
+    INSERT INTO tblPasos (IdReceta, NumeroPaso, Descripcion)
+    VALUES (@IdReceta, @NumeroPaso, @Descripcion);
+END;
+GO
+
+-- Editar paso: Modificar un nuevo paso para un receta concreta.
+CREATE PROCEDURE EditarPaso
+    @IdPaso INT,
+    @Descripcion TEXT
+AS
+BEGIN
+    UPDATE tblPasos
+    SET Descripcion = @Descripcion
+    WHERE IdPaso = @IdPaso;
+END;
+GO
+-- Eliminar paso: Eliminar un paso para un receta concreta.
+-- Eliminar paso
+CREATE PROCEDURE EliminarPaso
+    @IdPaso INT
+AS
+BEGIN
+    DELETE FROM tblPasos WHERE IdPaso = @IdPaso;
+END;
+GO
+-- Procedimientos para la gestión de los Ingredientes por Receta:
+
+-- Agregar Ingredientes a una receta
+CREATE PROCEDURE AgregarIngredientesAReceta
+    @IdReceta INT,
+    @IdIngrediente INT,
+    @Cantidad DECIMAL(18,2)
+AS
+BEGIN
+    INSERT INTO tblRecetasIngredientes (IdReceta, IdIngrediente, Cantidad)
+    VALUES (@IdReceta, @IdIngrediente, @Cantidad);
+END;
+GO
+-- Editar ingrediente: Modificar un ingrediente de una receta.
+CREATE PROCEDURE EditarIngredienteDeReceta
+    @IdReceta INT,
+    @IdIngrediente INT,
+    @Cantidad DECIMAL(18,2)
+AS
+BEGIN
+    UPDATE tblRecetasIngredientes
+    SET Cantidad = @Cantidad
+    WHERE IdReceta = @IdReceta AND IdIngrediente = @IdIngrediente;
+END;
+GO
+
+-- Eliminar ingrediente: Eliminar un ingrediente para un receta concreta.
+CREATE PROCEDURE EliminarIngredienteDeReceta
+    @IdReceta INT,
+    @IdIngrediente INT
+AS
+BEGIN
+    DELETE FROM tblRecetasIngredientes
+    WHERE IdReceta = @IdReceta AND IdIngrediente = @IdIngrediente;
+END;
+GO
+-- Funciones para el sistema:
+-- Función para contar cuentos ingredientes tiene un receta concreta.
+CREATE FUNCTION ContarIngredientesPorReceta
+(
+    @IdReceta INT
+)
+RETURNS INT
+AS
+BEGIN
+    DECLARE @Count INT;
+    SELECT @Count = COUNT(*) FROM tblRecetasIngredientes WHERE IdReceta = @IdReceta;
+    RETURN @Count;
+END;
+GO
+-- Triggers:
+-- Trigger para actualizar la fecha de modificación de una receta.
+-- Trigger para actualizar la fecha de modificación de una receta
+CREATE TRIGGER ActualizarFechaModificacionReceta
+ON tblRecetas
+AFTER UPDATE
+AS
+BEGIN
+    UPDATE tblRecetas
+    SET FechaModificacion = GETDATE()
+    FROM tblRecetas r
+    JOIN inserted i ON r.IdReceta = i.IdReceta;
+END;
+GO
+-- Trigger para eliminar los pasos de una receta al eliminarla
+CREATE TRIGGER EliminarPasosDeReceta
+ON tblRecetas
+AFTER DELETE
+AS
+BEGIN
+    DELETE FROM tblPasos WHERE IdReceta IN (SELECT IdReceta FROM deleted);
+END;
+GO
+
+-- Trigger para registrar el historial de cambios en una receta
+CREATE TABLE tblHistorialCambiosReceta (
+    IdReceta INT,
+    FechaCambio DATETIME,
+    Columna VARCHAR(50),
+    ValorAnterior VARCHAR(MAX),
+    ValorNuevo VARCHAR(MAX)
+);
+GO
+-- Trigger para registrar el historial de cambios en una receta - Agregar la tabla con los datos idReceta, fechaCambio, columna, valorAnterior, ValorNuevo.
+CREATE TRIGGER RegistrarCambioReceta
+ON tblRecetas
+AFTER UPDATE
+AS
+BEGIN
+    INSERT INTO tblHistorialCambiosReceta (IdReceta, FechaCambio, Columna, ValorAnterior, ValorNuevo)
+    SELECT IdReceta, GETDATE(), COLUMN_NAME, deleted.COLUMN_NAME, inserted.COLUMN_NAME
+    FROM deleted
+    JOIN inserted ON deleted.IdReceta = inserted.IdReceta
+    WHERE deleted.COLUMN_NAME <> inserted.COLUMN_NAME;
+END;
+GO
+
+-- Datos
+-- Insertar datos de ejemplo en tblRecetas
+INSERT INTO tblRecetas (Nombre, Descripcion, TiempoPreparacion, Dificultad, Imagen, FechaModificacion)
+VALUES ('Tarta de manzana', 'Una deliciosa tarta de manzana casera.', 60, 2, NULL, '2024-03-07');
+
+-- Insertar datos de ejemplo en tblIngredientes
+INSERT INTO tblIngredientes (Nombre, UnidadMedida)
+VALUES ('Manzanas', 'unidades'),
+       ('Harina', 'gramos'),
+       ('Azúcar', 'gramos'),
+       ('Mantequilla', 'gramos'),
+       ('Canela', 'cucharaditas');
+
+-- Insertar datos de ejemplo en tblRecetasIngredientes
+INSERT INTO tblRecetasIngredientes (IdReceta, IdIngrediente, Cantidad)
+VALUES (1, 1, 4),  -- 4 manzanas
+       (1, 2, 200),  -- 200 gramos de harina
+       (1, 3, 150),  -- 150 gramos de azúcar
+       (1, 4, 100),  -- 100 gramos de mantequilla
+       (1, 5, 2);    -- 2 cucharaditas de canela
+
+-- Insertar datos de ejemplo en tblPasos
+INSERT INTO tblPasos (IdReceta, NumeroPaso, Descripcion)
+VALUES (1, 1, 'Pelar y cortar las manzanas en rodajas.'),
+       (1, 2, 'Preparar la masa para la tarta con harina, azúcar y mantequilla.'),
+       (1, 3, 'Colocar las rodajas de manzana sobre la masa en un molde.'),
+       (1, 4, 'Espolvorear canela por encima.'),
+       (1, 5, 'Hornear a 180°C durante 40 minutos.');
+
+-- Insertar datos de ejemplo en tblCategorias
+INSERT INTO tblCategorias (Nombre)
+VALUES ('Postres'),
+       ('Tartas');
+
+-- Insertar datos de ejemplo en tblRecetasCategorias
+INSERT INTO tblRecetasCategorias (IdReceta, IdCategoria)
+VALUES (1, 1),  -- La receta 1 pertenece a la categoría 'Postres'
+       (1, 2);  -- La receta 1 pertenece a la categoría 'Tartas'
