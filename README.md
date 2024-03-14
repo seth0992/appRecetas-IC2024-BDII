@@ -140,32 +140,335 @@ A continuación se deberá de elaborar cada uno de los siguientes procedimientos
 
 1. Procedimientos para la gestión de recetas:
    1. Obtener recetas: Obtener una lista de todas las recetas.
+
+    ```sql
+    CREATE or ALTER PROCEDURE spObtenerRecetas
+    AS
+    BEGIN
+        SELECT IdReceta,Nombre, Descripcion, TiempoPreparacion, Dificultad, Imagen, FechaModificacion FROM tblRecetas
+    END
+    
+    -- Probar el procedimiento almacenado (SP)
+    EXEC spObtenerRecetas
+    GO
+   ```
+
    2. Obtener receta por ID: Obtener la información de una receta específica.
-   3. Agregar receta: Crear una nueva receta, tomar en cuenta la posibilidad de enviar las categorías a la que pertenece la receta
+
+    ```sql
+        CREATE or ALTER PROCEDURE spObtenerRecetaID
+        @idReceta INT
+        AS
+        BEGIN
+            SELECT IdReceta, Nombre, Descripcion, TiempoPreparacion, Dificultad, Imagen, FechaModificacion FROM tblRecetas WHERE IdReceta = @idReceta
+        END
+        
+        -- Probar el procedimiento almacenado (SP)
+        EXEC spObtenerRecetaID 1
+        GO
+    ```
+
+   3. Agregar receta: Crear una nueva receta, tomar en cuenta la posibilidad de enviar las categorías a la que pertenece la receta.
+
+    ```sql
+    CREATE or ALTER PROCEDURE spAgregarReceta
+    @nombre VARCHAR(100),
+    @descripcion TEXT,
+    @tiempoPreparacion INT,
+    @dificultad INT,
+    @Imagen IMAGE
+    AS
+    BEGIN    	
+        INSERT INTO tblRecetas (Nombre, Descripcion, TiempoPreparacion,Dificultad,Imagen,FechaModificacion) VALUES (@nombre,@descripcion,@tiempoPreparacion,@dificultad,@Imagen,GETDATE())
+    END
+    
+    -- Probar el procedimiento almacenado (SP)
+    EXEC spAgregarReceta 'Tres leches', 'Postre que es un queque con tres leches', 60, 2, null;
+    GO
+    ```
+
    4. Editar receta: Modificar la información de una receta existente.
+
+    ```sql
+    CREATE or ALTER PROCEDURE spEditarReceta
+    @IdReceta INT,
+    @nombre VARCHAR(100),
+    @descripcion TEXT,
+    @tiempoPreparacion INT,
+    @dificultad INT,
+    @Imagen IMAGE
+    AS
+    BEGIN
+        UPDATE tblRecetas SET Nombre= @nombre, Descripcion = @descripcion, TiempoPreparacion = @tiempoPreparacion, Dificultad = @dificultad, Imagen = @Imagen, FechaModificacion = GETDATE() WHERE IdReceta = @IdReceta
+    END
+    
+    ---- Probar el procedimiento almacenado (SP)
+    EXEC spEditarReceta 1,'Tres leches El mejor', 'Postre que es un queque con tres leches', 60, 2, null;
+    GO
+    ```
+
    5. Eliminar recetas: Eliminar una receta del sistema.
+
+    ```sql
+    CREATE or ALTER PROCEDURE spEliminarReceta
+    @IdReceta INT
+    AS
+    BEGIN
+        DELETE FROM tblRecetas WHERE IdReceta = @IdReceta
+    END
+    
+    ---- Probar el procedimiento almacenado (SP)
+    EXEC spEliminarReceta 1;
+    GO
+    ```
+
 2. Procedimientos para la gestión de Ingredientes:
    1. Obtener Ingredientes: Obtener una lista de todos los Ingredientes de un receta.
+
+   ```sql
+    CREATE PROCEDURE spObtenerIngredientesPorReceta
+        @IdReceta INT
+    AS
+    BEGIN
+        SELECT i.*
+        FROM tblIngredientes i
+        INNER JOIN tblRecetasIngredientes ri ON i.IdIngrediente = ri.IdIngrediente
+        WHERE ri.IdReceta = @IdReceta;
+    END;
+    GO
+    ```
+
    2. Obtener Ingrediente por ID: Obtener la información de un Ingrediente específico.
+
+    ```sql
+    CREATE PROCEDURE spObtenerIngredientePorID
+    @IdIngrediente INT
+    AS
+    BEGIN
+        SELECT IdIngrediente,Nombre,UnidadMedida FROM tblIngredientes WHERE IdIngrediente = @IdIngrediente;
+    END;
+    GO
+    ```
+
    3. Agregar Ingrediente: Crear un nuevo Ingrediente.
+
+    ```sql
+    CREATE PROCEDURE spAgregarIngrediente
+    @Nombre VARCHAR(50),
+    @UnidadMedida VARCHAR(10)
+    AS
+    BEGIN
+        INSERT INTO tblIngredientes (Nombre, UnidadMedida)
+        VALUES (@Nombre, @UnidadMedida);
+    END;
+    GO
+    ```
+
    4. Editar Ingrediente: Modificar la información de un Ingrediente existente.
+
+    ```sql
+    CREATE PROCEDURE spEditarIngrediente
+        @IdIngrediente INT,
+        @Nombre VARCHAR(50),
+        @UnidadMedida VARCHAR(10)
+    AS
+    BEGIN
+        UPDATE tblIngredientes
+        SET Nombre = @Nombre, UnidadMedida = @UnidadMedida
+        WHERE IdIngrediente = @IdIngrediente;
+    END;
+    GO
+    ```
+
    5. Eliminar Ingrediente: Eliminar un Ingrediente del sistema.
+
+    ```sql
+    CREATE PROCEDURE spEliminarIngrediente
+        @IdIngrediente INT
+    AS
+    BEGIN
+        DELETE FROM tblIngredientes WHERE IdIngrediente = @IdIngrediente;
+    END;
+    GO
+    ```
+
 3. Procedimientos para la gestión de categorías:
    1. Obtener categorías: Obtener una lista de todas las categorías.
+
+    ```sql
+    CREATE PROCEDURE spObtenerCategorias
+    AS
+    BEGIN
+        SELECT IdCategoria,Nombre FROM tblCategorias;
+    END;
+    GO
+    ```
+
    2. Obtener categoría por ID: Obtener la información de una categoría específica.
+
+    ```sql
+    CREATE PROCEDURE spObtenerCategoriaPorID
+        @IdCategoria INT
+    AS
+    BEGIN
+        SELECT IdCategoria,Nombre FROM tblCategorias WHERE IdCategoria = @IdCategoria;
+    END;
+    GO
+    ```
+
    3. Agregar categoría: Crear una nueva categoría.
+
+    ```sql
+    CREATE PROCEDURE spAgregarCategoria
+        @Nombre VARCHAR(50)
+    AS
+    BEGIN
+        INSERT INTO tblCategorias (Nombre)
+        VALUES (@Nombre);
+    END;
+    GO
+    ```
+
    4. Editar categoría: Modificar la información de una categoría existente.
+
+    ```sql
+    CREATE PROCEDURE spEditarCategoria
+        @IdCategoria INT,
+        @Nombre VARCHAR(50)
+    AS
+    BEGIN
+        UPDATE tblCategorias
+        SET Nombre = @Nombre
+        WHERE IdCategoria = @IdCategoria;
+    END;
+    GO
+    ```
+
    5. Eliminar categoría: Eliminar una categoría del sistema.
+
+    ```sql
+    CREATE PROCEDURE spEliminarCategoria
+        @IdCategoria INT
+    AS
+    BEGIN
+        DELETE FROM tblCategorias WHERE IdCategoria = @IdCategoria;
+    END;
+    GO
+    ```
+
 4. Procedimientos para la gestión de los pasos:
    1. Obtener pasos: Obtener una lista de todas las pasos de una receta concreta.
+
+    ```sql
+    CREATE PROCEDURE spObtenerPasosPorReceta
+        @IdReceta INT
+    AS
+    BEGIN
+        SELECT IdPaso, IdReceta, NumeroPaso, Descripcion FROM tblPasos WHERE IdReceta = @IdReceta;
+    END;
+    GO
+    ```
+
    2. Obtener pasos por ID: Obtener la información del paso específico.
+
+    ```sql
+    CREATE PROCEDURE spObtenerPasoPorID
+        @IdPaso INT
+    AS
+    BEGIN
+        SELECT IdPaso, IdReceta, NumeroPaso, Descripcion FROM tblPasos WHERE IdPaso = @IdPaso;
+    END;
+    GO
+    ```
+
    3. Agregar paso: Crear un nuevo paso para un receta concreta.
+
+    ```sql
+    CREATE PROCEDURE spAgregarPaso
+        @IdReceta INT,
+        @NumeroPaso INT,
+        @Descripcion TEXT
+    AS
+    BEGIN
+        INSERT INTO tblPasos (IdReceta, NumeroPaso, Descripcion)
+        VALUES (@IdReceta, @NumeroPaso, @Descripcion);
+    END;
+    GO
+    ```
+
    4. Editar paso: Modificar un nuevo paso para un receta concreta.
+
+    ```sql
+    CREATE PROCEDURE spEditarPaso
+        @IdPaso INT,
+        @Descripcion TEXT
+    AS
+    BEGIN
+        UPDATE tblPasos
+        SET Descripcion = @Descripcion
+        WHERE IdPaso = @IdPaso;
+    END;
+    GO
+    ```
+
    5. Eliminar paso: Eliminar un paso para un receta concreta.
+
+    ```sql
+    CREATE PROCEDURE spEliminarPaso
+        @IdPaso INT
+    AS
+    BEGIN
+        DELETE FROM tblPasos WHERE IdPaso = @IdPaso;
+    END;
+    GO
+    ```
+
 5. Procedimientos para la gestión de los Ingredientes por Receta:
    1. Agregar Ingredientes a una receta
+
+    ```sql
+    CREATE PROCEDURE spAgregarIngredientesAReceta
+        @IdReceta INT,
+        @IdIngrediente INT,
+        @Cantidad DECIMAL(18,2)
+    AS
+    BEGIN
+        INSERT INTO tblRecetasIngredientes (IdReceta, IdIngrediente, Cantidad)
+        VALUES (@IdReceta, @IdIngrediente, @Cantidad);
+    END;
+    GO
+    ```
+
    2. Editar ingrediente: Modificar un ingrediente de una receta.
+
+    ```sql
+    CREATE PROCEDURE spEditarIngredienteDeReceta
+        @IdReceta INT,
+        @IdIngrediente INT,
+        @Cantidad DECIMAL(18,2)
+    AS
+    BEGIN
+        UPDATE tblRecetasIngredientes
+        SET Cantidad = @Cantidad
+        WHERE IdReceta = @IdReceta AND IdIngrediente = @IdIngrediente;
+    END;
+    GO
+    ```
+
    3. Eliminar ingrediente: Eliminar un  ingrediente para un receta concreta.
+
+    ```sql
+    CREATE PROCEDURE spEliminarIngredienteDeReceta
+        @IdReceta INT,
+        @IdIngrediente INT
+    AS
+    BEGIN
+        DELETE FROM tblRecetasIngredientes
+        WHERE IdReceta = @IdReceta AND IdIngrediente = @IdIngrediente;
+    END;
+    GO
+    ```
+
 6. Funciones para el sistema:
    1. Función para contar cuentos ingredientes tiene un receta concreta.
 7. Triggers:
@@ -185,7 +488,7 @@ En la ventana que se despliega se deberá seleccionar la opción **SQL Server Ne
 
 ![PuertoTCP](./recursosTutorial/image/tpc2.png)
 
-En la ventana que se despliega se deberá configurar en la pestaña **Protocol** la opción de **Enabled en Yes** a como se muestra en la imagen: 
+En la ventana que se despliega se deberá configurar en la pestaña **Protocol** la opción de **Enabled en Yes** a como se muestra en la imagen:
 
 ![PuertoTCP](./recursosTutorial/image/tpc3.png)
 
@@ -534,10 +837,10 @@ import javax.swing.table.DefaultTableModel;
  * @author seth
  */
 public class CategoriaJDBC {
-    private final String SQL_INSERT_SP = "{CALL spCrearCategoria(?)}";
-    private final String SQL_UPDATE_SP = "{CALL spActualizarCategoria(?,?)}";
+   private final String SQL_INSERT_SP = "{CALL spAgregarCategoria(?)}";
+    private final String SQL_UPDATE_SP = "{CALL spEditarCategoria(?,?)}";
     private final String SQL_DELETE_SP = "{CALL spEliminarCategoria(?)}";
-    private final String SQL_SELECT_SP = "{CALL spObtenerCategorias(?)}";
+    private final String SQL_SELECT_SP = "{CALL spObtenerCategoriasPorNombre(?)}";
 
     //Método para registrar la categoría
     public int registrarCategoria(String nombreCategoria) {
@@ -551,7 +854,7 @@ public class CategoriaJDBC {
 
         try {
 
-            conn = connectionSQLServer.getConnection(); //Se obtiene la conexion desde la clase Conexion SQL Server
+            conn = connectionSQLSERVER.getConnection(); //Se obtiene la conexion desde la clase Conexion SQL Server
             cstmt = conn.prepareCall(SQL_INSERT_SP); //Se prepara la llamada al procedimiento 
 
             //Se Sustituye los valores a enviar en el procedimiento almacenado
@@ -565,8 +868,8 @@ public class CategoriaJDBC {
         } catch (SQLException ex) {
             ex.printStackTrace();
         } finally {
-            connectionSQLServer.close(cstmt);
-            connectionSQLServer.close(conn);
+            connectionSQLSERVER.close(cstmt);
+            connectionSQLSERVER.close(conn);
         }
 
         return filaAfectadas;
@@ -585,7 +888,7 @@ public class CategoriaJDBC {
 
         try {
 
-            conn = connectionSQLServer.getConnection(); //Se obtiene la conexion desde la clase Conexion SQL Server
+            conn = connectionSQLSERVER.getConnection(); //Se obtiene la conexion desde la clase Conexion SQL Server
             cstmt = conn.prepareCall(SQL_UPDATE_SP); //Se prepara la llamada al procedimiento 
 
             //Se Sustituye los valores a enviar en el procedimiento almacenado
@@ -600,8 +903,8 @@ public class CategoriaJDBC {
         } catch (SQLException ex) {
             ex.printStackTrace();
         } finally {
-            connectionSQLServer.close(cstmt);
-            connectionSQLServer.close(conn);
+            connectionSQLSERVER.close(cstmt);
+            connectionSQLSERVER.close(conn);
         }
 
         return filaAfectadas;
@@ -620,7 +923,7 @@ public class CategoriaJDBC {
 
         try {
 
-            conn = connectionSQLServer.getConnection(); //Se obtiene la conexion desde la clase Conexion SQL Server
+            conn = connectionSQLSERVER.getConnection(); //Se obtiene la conexion desde la clase Conexion SQL Server
             cstmt = conn.prepareCall(SQL_DELETE_SP); //Se prepara la llamada al procedimiento 
 
             //Se Sustituye los valores a enviar en el procedimiento almacenado
@@ -634,8 +937,8 @@ public class CategoriaJDBC {
         } catch (SQLException ex) {
             ex.printStackTrace();
         } finally {
-            connectionSQLServer.close(cstmt);
-            connectionSQLServer.close(conn);
+            connectionSQLSERVER.close(cstmt);
+            connectionSQLSERVER.close(conn);
         }
 
         return filaAfectadas;
@@ -657,7 +960,7 @@ public class CategoriaJDBC {
         
         try {
 
-            conn = connectionSQLServer.getConnection(); //Se obtiene la conexion desde la clase Conexion SQL Server
+            conn = connectionSQLSERVER.getConnection(); //Se obtiene la conexion desde la clase Conexion SQL Server
             cstmt = conn.prepareCall(SQL_SELECT_SP, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY); //Se prepara la llamada al procedimiento 
 
             //Se Sustituye los valores a enviar en el procedimiento almacenado
@@ -682,9 +985,9 @@ public class CategoriaJDBC {
         } catch (SQLException ex) {
             ex.printStackTrace();
         } finally {
-            connectionSQLServer.close(cstmt);
-            connectionSQLServer.close(conn);
-            connectionSQLServer.close(rs);
+            connectionSQLSERVER.close(cstmt);
+            connectionSQLSERVER.close(conn);
+            connectionSQLSERVER.close(rs);
         }
 
         return modeloTabla;
@@ -692,9 +995,129 @@ public class CategoriaJDBC {
 }
 ```
 
-##### Clase PasosJDBC
-
 ##### Clase IngredientesJDBC
+
+
+
+##### Clase PasosJDBC
 
 ##### Clase RecetasJDBC
 
+### GUI
+
+En cuanto a la interfaz gráfica de Usuario no se detallara a profundidad la creación de la misma solo se mostrar la pantallas creadas para cada uno de los casos:
+
+#### Formulario de Categorias
+
+Se deberá crear un JFrame con el nombre de frmControlCategoria el el cual se deberá crear la interfaz similar a la que se muestra en la imagen:
+
+![Formulario Categoría](./recursosTutorial/image/guiCategoria.png)
+
+**Desglose de controles utilizados:**
+<table>
+ <thead>
+    <tr> 
+        <th>Control </th>
+        <th>Propiedad </th>
+        <th>Valor</th>
+    </tr>
+  </thead>
+  <tbody>
+  <tr>
+  <td>JFrame</td>
+    <td>defaultCloseOperation</td>
+    <td>EXIT_ON_CLOSE</td>
+  </tr>
+  <tr>
+    <td>jLabel</td>
+    <td>text</td>
+    <td>Control de Categoria</td>
+  </tr>
+  <tr>
+    <td>JPanel</td>
+    <td>border → titled border → title</td>
+    <td>Datos de la Categoría</td>
+  </tr>
+  <tr>
+    <td>JPanel</td>
+    <td>border → titled border → title</td>
+    <td>Lista de Categorías</td>
+  </tr>
+  <tr>
+    <td>JLabel</td>
+    <td>text</td>
+    <td>Nombre de la categoría</td>
+  </tr>
+  <tr>
+    <td rowspan=2>Text Field</td>
+    <td>text</td>
+    <td>"  " 👉🏻 Vació</td>
+  </tr>
+  <tr>
+    <td>Variable Name</td>
+    <td>txtNombreCat</td>
+  </tr>
+
+  <tr>
+    <td rowspan=3>Button</td>
+    <td>text</td>
+    <td>Guardar</td>
+  </tr>
+  <tr>
+    <td>Variable Name</td>
+    <td>btnGuardar</td>
+  </tr>
+    <tr>
+    <td>Icon</td>
+    <td>Buscar el icono en el paquete de recurso</td>
+  </tr>
+
+ <tr>
+    <td rowspan=3>Button</td>
+    <td>text</td>
+    <td>Eliminar</td>
+  </tr>
+  <tr>
+    <td>Variable Name</td>
+    <td>btnEliminar</td>
+  </tr>
+    <tr>
+    <td>Icon</td>
+    <td>Buscar el icono en el paquete de recurso</td>
+  </tr>
+
+ <tr>
+    <td rowspan=3>Button</td>
+    <td>text</td>
+    <td>Limpiar</td>
+  </tr>
+  <tr>
+    <td>Variable Name</td>
+    <td>btnLimpiar</td>
+  </tr>
+    <tr>
+    <td>Icon</td>
+    <td>Buscar el icono en el paquete de recurso</td>
+  </tr>
+   <tr>
+    <td>JLabel</td>
+    <td>text</td>
+    <td>Buscar:</td>
+  </tr>
+  <tr>
+    <td rowspan=2>Text Field</td>
+    <td>text</td>
+    <td>"  " 👉🏻 Vació</td>
+  </tr>
+  <tr>
+    <td>Variable Name</td>
+    <td>txtBuscarCat</td>
+  </tr>
+  </tbody>
+
+  <tr>
+    <td>Table</td>
+    <td>Variable Name</td>
+    <td>tblListaCategorias</td>
+  </tr>
+</table>
