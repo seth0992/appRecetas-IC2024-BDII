@@ -4,11 +4,19 @@
  */
 package gui;
 
+import javax.swing.JOptionPane;
+import modelJDBC.CategoriaJDBC;
+import modelJDBC.IngredienteJDBC;
+
 /**
  *
  * @author seth
  */
 public class frmIngredientes extends javax.swing.JFrame {
+
+       boolean nuevo = true; //Indicador para saber si es una categoría nueva
+    int id = 0; //Almacenara el Id de la categoría a modificar/eliminar
+    IngredienteJDBC ingred = new IngredienteJDBC(); // Instancia de jdbc para el uso de los métodos
 
     /**
      * Creates new form frmIngredientes
@@ -29,16 +37,16 @@ public class frmIngredientes extends javax.swing.JFrame {
         jLabel2 = new javax.swing.JLabel();
         jPanel1 = new javax.swing.JPanel();
         jLabel3 = new javax.swing.JLabel();
-        txtNombreCat = new javax.swing.JTextField();
-        txtNombreCat1 = new javax.swing.JTextField();
+        txtNombreIng = new javax.swing.JTextField();
+        txtUnidadMedidaIng = new javax.swing.JTextField();
         jLabel4 = new javax.swing.JLabel();
-        btnLimpiarCat = new javax.swing.JButton();
-        btnEliminarCat = new javax.swing.JButton();
-        btnGuardarCat = new javax.swing.JButton();
+        btnLimpiarIng = new javax.swing.JButton();
+        btnEliminarIng = new javax.swing.JButton();
+        btnGuardarIng = new javax.swing.JButton();
         jPanel2 = new javax.swing.JPanel();
         jScrollPane1 = new javax.swing.JScrollPane();
-        tblListaCategorias = new javax.swing.JTable();
-        txtBuscarCat = new javax.swing.JTextField();
+        tblListaIngredientes = new javax.swing.JTable();
+        txtBuscarIng = new javax.swing.JTextField();
         jLabel5 = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
@@ -46,33 +54,33 @@ public class frmIngredientes extends javax.swing.JFrame {
         jLabel2.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
         jLabel2.setText("Control de Ingredientes");
 
-        jPanel1.setBorder(javax.swing.BorderFactory.createTitledBorder("Datos de Ingredientes"));
+        jPanel1.setBorder(javax.swing.BorderFactory.createTitledBorder(null));
 
         jLabel3.setText("Nombre del Ingediente:");
 
         jLabel4.setText("Unidad de Medida");
 
-        btnLimpiarCat.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/clean.png"))); // NOI18N
-        btnLimpiarCat.setText("Limpiar");
-        btnLimpiarCat.addActionListener(new java.awt.event.ActionListener() {
+        btnLimpiarIng.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/clean.png"))); // NOI18N
+        btnLimpiarIng.setText("Limpiar");
+        btnLimpiarIng.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnLimpiarCatActionPerformed(evt);
+                btnLimpiarIngActionPerformed(evt);
             }
         });
 
-        btnEliminarCat.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/delete.png"))); // NOI18N
-        btnEliminarCat.setText("Eliminar");
-        btnEliminarCat.addActionListener(new java.awt.event.ActionListener() {
+        btnEliminarIng.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/delete.png"))); // NOI18N
+        btnEliminarIng.setText("Eliminar");
+        btnEliminarIng.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnEliminarCatActionPerformed(evt);
+                btnEliminarIngActionPerformed(evt);
             }
         });
 
-        btnGuardarCat.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/save.png"))); // NOI18N
-        btnGuardarCat.setText("Guardar");
-        btnGuardarCat.addActionListener(new java.awt.event.ActionListener() {
+        btnGuardarIng.setIcon(new javax.swing.ImageIcon(getClass().getResource("/resources/save.png"))); // NOI18N
+        btnGuardarIng.setText("Guardar");
+        btnGuardarIng.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnGuardarCatActionPerformed(evt);
+                btnGuardarIngActionPerformed(evt);
             }
         });
 
@@ -88,21 +96,21 @@ public class frmIngredientes extends javax.swing.JFrame {
                             .addGroup(jPanel1Layout.createSequentialGroup()
                                 .addComponent(jLabel3)
                                 .addGap(0, 0, Short.MAX_VALUE))
-                            .addComponent(txtNombreCat))
+                            .addComponent(txtNombreIng))
                         .addGap(31, 31, 31))
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(jPanel1Layout.createSequentialGroup()
                                 .addComponent(jLabel4)
                                 .addGap(0, 0, Short.MAX_VALUE))
-                            .addComponent(txtNombreCat1))
+                            .addComponent(txtUnidadMedidaIng))
                         .addContainerGap())
                     .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addComponent(btnGuardarCat, javax.swing.GroupLayout.DEFAULT_SIZE, 126, Short.MAX_VALUE)
+                        .addComponent(btnGuardarIng, javax.swing.GroupLayout.DEFAULT_SIZE, 126, Short.MAX_VALUE)
                         .addGap(18, 18, 18)
-                        .addComponent(btnEliminarCat, javax.swing.GroupLayout.DEFAULT_SIZE, 127, Short.MAX_VALUE)
+                        .addComponent(btnEliminarIng, javax.swing.GroupLayout.DEFAULT_SIZE, 127, Short.MAX_VALUE)
                         .addGap(18, 18, 18)
-                        .addComponent(btnLimpiarCat, javax.swing.GroupLayout.DEFAULT_SIZE, 125, Short.MAX_VALUE))))
+                        .addComponent(btnLimpiarIng, javax.swing.GroupLayout.DEFAULT_SIZE, 125, Short.MAX_VALUE))))
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -110,22 +118,22 @@ public class frmIngredientes extends javax.swing.JFrame {
                 .addContainerGap()
                 .addComponent(jLabel3)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(txtNombreCat, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(txtNombreIng, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(18, 18, 18)
                 .addComponent(jLabel4)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(txtNombreCat1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(txtUnidadMedidaIng, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(btnEliminarCat, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(btnLimpiarCat, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(btnGuardarCat, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(btnEliminarIng, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(btnLimpiarIng, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(btnGuardarIng, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
 
-        jPanel2.setBorder(javax.swing.BorderFactory.createTitledBorder("Lista de Ingredientes"));
+        jPanel2.setBorder(javax.swing.BorderFactory.createTitledBorder(null));
 
-        tblListaCategorias.setModel(new javax.swing.table.DefaultTableModel(
+        tblListaIngredientes.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
                 {},
                 {},
@@ -136,19 +144,19 @@ public class frmIngredientes extends javax.swing.JFrame {
 
             }
         ));
-        tblListaCategorias.addMouseListener(new java.awt.event.MouseAdapter() {
+        tblListaIngredientes.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mousePressed(java.awt.event.MouseEvent evt) {
-                tblListaCategoriasMousePressed(evt);
+                tblListaIngredientesMousePressed(evt);
             }
         });
-        jScrollPane1.setViewportView(tblListaCategorias);
+        jScrollPane1.setViewportView(tblListaIngredientes);
 
-        txtBuscarCat.addKeyListener(new java.awt.event.KeyAdapter() {
+        txtBuscarIng.addKeyListener(new java.awt.event.KeyAdapter() {
             public void keyPressed(java.awt.event.KeyEvent evt) {
-                txtBuscarCatKeyPressed(evt);
+                txtBuscarIngKeyPressed(evt);
             }
             public void keyReleased(java.awt.event.KeyEvent evt) {
-                txtBuscarCatKeyReleased(evt);
+                txtBuscarIngKeyReleased(evt);
             }
         });
 
@@ -166,7 +174,7 @@ public class frmIngredientes extends javax.swing.JFrame {
                     .addGroup(jPanel2Layout.createSequentialGroup()
                         .addComponent(jLabel5)
                         .addGap(18, 18, 18)
-                        .addComponent(txtBuscarCat)))
+                        .addComponent(txtBuscarIng)))
                 .addContainerGap())
         );
         jPanel2Layout.setVerticalGroup(
@@ -174,7 +182,7 @@ public class frmIngredientes extends javax.swing.JFrame {
             .addGroup(jPanel2Layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(txtBuscarCat, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(txtBuscarIng, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel5))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 174, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -212,32 +220,33 @@ public class frmIngredientes extends javax.swing.JFrame {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private void tblListaCategoriasMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblListaCategoriasMousePressed
+    private void tblListaIngredientesMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblListaIngredientesMousePressed
 
-        idCategoria = Integer.parseInt(tblListaCategorias.getValueAt(tblListaCategorias.getSelectedRow(), 0).toString());
-        txtNombreCat.setText(tblListaCategorias.getValueAt(tblListaCategorias.getSelectedRow(), 1).toString());
+        id = Integer.parseInt(tblListaIngredientes.getValueAt(tblListaIngredientes.getSelectedRow(), 0).toString());
+        txtNombreIng.setText(tblListaIngredientes.getValueAt(tblListaIngredientes.getSelectedRow(), 1).toString());
+        txtUnidadMedidaIng.setText(tblListaIngredientes.getValueAt(tblListaIngredientes.getSelectedRow(), 2).toString());
 
-        if (idCategoria > 0) {
+        if (id > 0) {
             nuevo = false;
         }
-    }//GEN-LAST:event_tblListaCategoriasMousePressed
+    }//GEN-LAST:event_tblListaIngredientesMousePressed
 
-    private void txtBuscarCatKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtBuscarCatKeyPressed
+    private void txtBuscarIngKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtBuscarIngKeyPressed
 
-    }//GEN-LAST:event_txtBuscarCatKeyPressed
+    }//GEN-LAST:event_txtBuscarIngKeyPressed
 
-    private void txtBuscarCatKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtBuscarCatKeyReleased
-        String filtro = txtBuscarCat.getText();
+    private void txtBuscarIngKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtBuscarIngKeyReleased
+        String filtro = txtBuscarIng.getText();
         //Se invoca el método para cargar los datos pero se le pasa como parametro el texto a buscar
         cargarDatos(filtro);
-    }//GEN-LAST:event_txtBuscarCatKeyReleased
+    }//GEN-LAST:event_txtBuscarIngKeyReleased
 
-    private void btnLimpiarCatActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnLimpiarCatActionPerformed
+    private void btnLimpiarIngActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnLimpiarIngActionPerformed
         limpiarDatos();
-    }//GEN-LAST:event_btnLimpiarCatActionPerformed
+    }//GEN-LAST:event_btnLimpiarIngActionPerformed
 
-    private void btnEliminarCatActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnEliminarCatActionPerformed
-        if(idCategoria == 0){
+    private void btnEliminarIngActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnEliminarIngActionPerformed
+        if(id == 0){
             JOptionPane.showMessageDialog(this, "Debes seleccionar una categoría para eliminarla", "Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
@@ -245,17 +254,18 @@ public class frmIngredientes extends javax.swing.JFrame {
         int opcion = JOptionPane.showConfirmDialog(this, "Esta segura que desea eliminar la categoía seleccionada?");
 
         if(opcion == 0){
-            cat.eliminarCategoria(idCategoria);
+            ingred.eliminarIngrediente(id);
             JOptionPane.showMessageDialog(this, "Se elimino la Categoría");
             limpiarDatos();
             cargarDatos(null);
         }
-    }//GEN-LAST:event_btnEliminarCatActionPerformed
+    }//GEN-LAST:event_btnEliminarIngActionPerformed
 
-    private void btnGuardarCatActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnGuardarCatActionPerformed
+    private void btnGuardarIngActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnGuardarIngActionPerformed
 
-        String nombreCat = txtNombreCat.getText(); //Obtener el dato del textfield
-
+        String nombreCat = txtNombreIng.getText(); //Obtener el dato del textfield
+        String unidadMedida = txtUnidadMedidaIng.getText();
+        
         if (nombreCat.equals("")) {
             JOptionPane.showMessageDialog(this, "Debes digitar una nombre para la Categoría");
             return;
@@ -263,7 +273,7 @@ public class frmIngredientes extends javax.swing.JFrame {
         int row = 0;
         if (nuevo) {
 
-            row = cat.registrarCategoria(nombreCat); //Llamar al metodo que encarga de registrar la categoria
+            row = ingred.registrarCategoria(nombreCat); //Llamar al metodo que encarga de registrar la categoria
 
             if (row > 0) {
                 JOptionPane.showMessageDialog(this, "Se Registro la Categoría");
@@ -272,7 +282,7 @@ public class frmIngredientes extends javax.swing.JFrame {
                 return;
             }
         } else {
-            row = cat.modificarCategoria(idCategoria, nombreCat); //Llamar al metodo que encarga de registrar la categoria
+            row = ingred.modificarCategoria(id, nombreCat); //Llamar al metodo que encarga de registrar la categoria
             if (row > 0) {
                 JOptionPane.showMessageDialog(this, "Se Modifico la Categoría");
             } else {
@@ -283,7 +293,7 @@ public class frmIngredientes extends javax.swing.JFrame {
 
         limpiarDatos();
         cargarDatos(null);
-    }//GEN-LAST:event_btnGuardarCatActionPerformed
+    }//GEN-LAST:event_btnGuardarIngActionPerformed
 
     /**
      * @param args the command line arguments
@@ -321,9 +331,9 @@ public class frmIngredientes extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton btnEliminarCat;
-    private javax.swing.JButton btnGuardarCat;
-    private javax.swing.JButton btnLimpiarCat;
+    private javax.swing.JButton btnEliminarIng;
+    private javax.swing.JButton btnGuardarIng;
+    private javax.swing.JButton btnLimpiarIng;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
@@ -331,9 +341,9 @@ public class frmIngredientes extends javax.swing.JFrame {
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JTable tblListaCategorias;
-    private javax.swing.JTextField txtBuscarCat;
-    private javax.swing.JTextField txtNombreCat;
-    private javax.swing.JTextField txtNombreCat1;
+    private javax.swing.JTable tblListaIngredientes;
+    private javax.swing.JTextField txtBuscarIng;
+    private javax.swing.JTextField txtNombreIng;
+    private javax.swing.JTextField txtUnidadMedidaIng;
     // End of variables declaration//GEN-END:variables
 }
