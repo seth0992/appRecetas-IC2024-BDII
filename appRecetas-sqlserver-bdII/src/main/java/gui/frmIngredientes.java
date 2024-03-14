@@ -5,6 +5,7 @@
 package gui;
 
 import javax.swing.JOptionPane;
+import javax.swing.table.DefaultTableModel;
 import modelJDBC.CategoriaJDBC;
 import modelJDBC.IngredienteJDBC;
 
@@ -54,7 +55,7 @@ public class frmIngredientes extends javax.swing.JFrame {
         jLabel2.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
         jLabel2.setText("Control de Ingredientes");
 
-        jPanel1.setBorder(javax.swing.BorderFactory.createTitledBorder(null));
+        jPanel1.setBorder(javax.swing.BorderFactory.createTitledBorder("Datos de Ingredientes"));
 
         jLabel3.setText("Nombre del Ingediente:");
 
@@ -131,7 +132,7 @@ public class frmIngredientes extends javax.swing.JFrame {
                 .addContainerGap())
         );
 
-        jPanel2.setBorder(javax.swing.BorderFactory.createTitledBorder(null));
+        jPanel2.setBorder(javax.swing.BorderFactory.createTitledBorder("Lista de Ingredientes "));
 
         tblListaIngredientes.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
@@ -247,15 +248,15 @@ public class frmIngredientes extends javax.swing.JFrame {
 
     private void btnEliminarIngActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnEliminarIngActionPerformed
         if(id == 0){
-            JOptionPane.showMessageDialog(this, "Debes seleccionar una categoría para eliminarla", "Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Debes seleccionar un ingrediente para eliminarla", "Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
 
-        int opcion = JOptionPane.showConfirmDialog(this, "Esta segura que desea eliminar la categoía seleccionada?");
+        int opcion = JOptionPane.showConfirmDialog(this, "Esta segura que desea eliminar el ingrediente seleccionada?");
 
         if(opcion == 0){
             ingred.eliminarIngrediente(id);
-            JOptionPane.showMessageDialog(this, "Se elimino la Categoría");
+            JOptionPane.showMessageDialog(this, "Se elimino el ingrediente");
             limpiarDatos();
             cargarDatos(null);
         }
@@ -263,30 +264,34 @@ public class frmIngredientes extends javax.swing.JFrame {
 
     private void btnGuardarIngActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnGuardarIngActionPerformed
 
-        String nombreCat = txtNombreIng.getText(); //Obtener el dato del textfield
+        String nombreIng = txtNombreIng.getText(); //Obtener el dato del textfield
         String unidadMedida = txtUnidadMedidaIng.getText();
         
-        if (nombreCat.equals("")) {
-            JOptionPane.showMessageDialog(this, "Debes digitar una nombre para la Categoría");
+        if (nombreIng.equals("")) {
+            JOptionPane.showMessageDialog(this, "Debes digitar una nombre para la ingrediente");
+            return;
+        }
+          if (unidadMedida.equals("")) {
+            JOptionPane.showMessageDialog(this, "Debes digitar una unidad de medida para la ingrediente");
             return;
         }
         int row = 0;
         if (nuevo) {
 
-            row = ingred.registrarCategoria(nombreCat); //Llamar al metodo que encarga de registrar la categoria
+            row = ingred.registrarIngredientes(nombreIng,unidadMedida); //Llamar al metodo que encarga de registrar la categoria
 
             if (row > 0) {
-                JOptionPane.showMessageDialog(this, "Se Registro la Categoría");
+                JOptionPane.showMessageDialog(this, "Se Registro el ingrediente");
             } else {
-                JOptionPane.showMessageDialog(this, "No Se Registro la Categoría", "Error", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "No Se Registro el Ingrediente", "Error", JOptionPane.ERROR_MESSAGE);
                 return;
             }
         } else {
-            row = ingred.modificarCategoria(id, nombreCat); //Llamar al metodo que encarga de registrar la categoria
+            row = ingred.modificarIngrediente(id, nombreIng, unidadMedida); //Llamar al metodo que encarga de registrar la categoria
             if (row > 0) {
-                JOptionPane.showMessageDialog(this, "Se Modifico la Categoría");
+                JOptionPane.showMessageDialog(this, "Se modifico el ingrediente");
             } else {
-                JOptionPane.showMessageDialog(this, "No Se Modifico la Categoría", "Error", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "No Se modifico el ingrediente", "Error", JOptionPane.ERROR_MESSAGE);
                 return;
             }
         }
@@ -294,7 +299,20 @@ public class frmIngredientes extends javax.swing.JFrame {
         limpiarDatos();
         cargarDatos(null);
     }//GEN-LAST:event_btnGuardarIngActionPerformed
+   
+    public void cargarDatos(String ingrediente) {
 
+        //VCarga el modelo de la tabla con sus datos, gracias al metodo ConsultarCategoria del JDBC
+        DefaultTableModel modelo = ingred.consultarIngrediente(ingrediente);
+        tblListaIngredientes.setModel(modelo);
+    }
+    
+    public void limpiarDatos() {
+        txtNombreIng.setText("");
+        txtBuscarIng.setText("");
+        id = 0;
+        nuevo = true;
+    }
     /**
      * @param args the command line arguments
      */
