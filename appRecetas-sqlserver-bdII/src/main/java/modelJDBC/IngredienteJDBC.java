@@ -16,10 +16,10 @@ import javax.swing.table.DefaultTableModel;
  * @author seth09
  */
 public class IngredienteJDBC {
-    private final String SQL_INSERT_SP = "{CALL spAgregarCategoria(?)}";
-    private final String SQL_UPDATE_SP = "{CALL spEditarCategoria(?,?)}";
-    private final String SQL_DELETE_SP = "{CALL spEliminarCategoria(?)}";
-    private final String SQL_SELECT_SP = "{CALL spObtenerCategoriasPorNombre(?)}";
+    private final String SQL_INSERT_SP = "{CALL spAgregarIngrediente(?,?)}";
+    private final String SQL_UPDATE_SP = "{CALL spEditarIngrediente(?,?,?)}";
+    private final String SQL_DELETE_SP = "{CALL spEliminarIngrediente(?)}";
+    private final String SQL_SELECT_SP = "{CALL spObtenerIngredientePorNombre(?)}";
 
     //Método para registrar la categoría
     public int registrarIngredientes(String nombreIngrediente, String unidadMedida) {

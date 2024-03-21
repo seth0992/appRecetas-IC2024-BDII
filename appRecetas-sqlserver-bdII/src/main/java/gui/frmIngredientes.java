@@ -15,9 +15,9 @@ import modelJDBC.IngredienteJDBC;
  */
 public class frmIngredientes extends javax.swing.JFrame {
 
-       boolean nuevo = true; //Indicador para saber si es una categoría nueva
-    int id = 0; //Almacenara el Id de la categoría a modificar/eliminar
-    IngredienteJDBC ingred = new IngredienteJDBC(); // Instancia de jdbc para el uso de los métodos
+    boolean nuevo = true; //Indicador para saber si es una ingrediente nueva
+    int id = 0; //Almacenara el Id del ingrediente a modificar/eliminar
+    IngredienteJDBC ingredientejdbc = new IngredienteJDBC(); // Instancia de jdbc para el uso de los métodos
 
     /**
      * Creates new form frmIngredientes
@@ -255,7 +255,7 @@ public class frmIngredientes extends javax.swing.JFrame {
         int opcion = JOptionPane.showConfirmDialog(this, "Esta segura que desea eliminar el ingrediente seleccionada?");
 
         if(opcion == 0){
-            ingred.eliminarIngrediente(id);
+            ingredientejdbc.eliminarIngrediente(id);
             JOptionPane.showMessageDialog(this, "Se elimino el ingrediente");
             limpiarDatos();
             cargarDatos(null);
@@ -278,7 +278,7 @@ public class frmIngredientes extends javax.swing.JFrame {
         int row = 0;
         if (nuevo) {
 
-            row = ingred.registrarIngredientes(nombreIng,unidadMedida); //Llamar al metodo que encarga de registrar la categoria
+            row = ingredientejdbc.registrarIngredientes(nombreIng,unidadMedida); //Llamar al metodo que encarga de registrar la categoria
 
             if (row > 0) {
                 JOptionPane.showMessageDialog(this, "Se Registro el ingrediente");
@@ -287,7 +287,7 @@ public class frmIngredientes extends javax.swing.JFrame {
                 return;
             }
         } else {
-            row = ingred.modificarIngrediente(id, nombreIng, unidadMedida); //Llamar al metodo que encarga de registrar la categoria
+            row = ingredientejdbc.modificarIngrediente(id, nombreIng, unidadMedida); //Llamar al metodo que encarga de registrar la categoria
             if (row > 0) {
                 JOptionPane.showMessageDialog(this, "Se modifico el ingrediente");
             } else {
@@ -303,12 +303,13 @@ public class frmIngredientes extends javax.swing.JFrame {
     public void cargarDatos(String ingrediente) {
 
         //VCarga el modelo de la tabla con sus datos, gracias al metodo ConsultarCategoria del JDBC
-        DefaultTableModel modelo = ingred.consultarIngrediente(ingrediente);
+        DefaultTableModel modelo = ingredientejdbc.consultarIngrediente(ingrediente);
         tblListaIngredientes.setModel(modelo);
     }
     
     public void limpiarDatos() {
         txtNombreIng.setText("");
+        txtUnidadMedidaIng.setText("");
         txtBuscarIng.setText("");
         id = 0;
         nuevo = true;

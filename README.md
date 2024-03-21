@@ -292,6 +292,18 @@ A continuación se deberá de elaborar cada uno de los siguientes procedimientos
     GO
     ```
 
+    6. Obtener todos los ingredientes que coincide con el nombre ingresado (Filtro de búsqueda).
+   
+    ```sql
+    CREATE PROCEDURE spObtenerIngredientePorNombre
+    @nombre VARCHAR(50) = NULL
+    AS
+    BEGIN
+        SELECT IdIngrediente,Nombre, UnidadMedida FROM tblIngredientes WHERE (nombre LIKE '%' +@nombre+ '%' OR @nombre IS NULL);;
+    END;
+    GO
+    ```
+
 3. Procedimientos para la gestión de categorías:
    1. Obtener categorías: Obtener una lista de todas las categorías.
 
@@ -352,6 +364,18 @@ A continuación se deberá de elaborar cada uno de los siguientes procedimientos
     AS
     BEGIN
         DELETE FROM tblCategorias WHERE IdCategoria = @IdCategoria;
+    END;
+    GO
+    ```
+
+    6. Obtener categorías: Obtener una lista de todas las categorías según nombre (Filtro de búsqueda).
+
+    ```sql
+    CREATE PROCEDURE spObtenerCategoriasPorNombre
+    @nombre VARCHAR(50) = NULL
+    AS
+    BEGIN
+        SELECT IdCategoria,Nombre FROM tblCategorias WHERE (nombre LIKE '%' +@nombre+ '%' OR @nombre IS NULL);;
     END;
     GO
     ```
@@ -997,6 +1021,185 @@ public class CategoriaJDBC {
 
 ##### Clase IngredientesJDBC
 
+Ahora vamos a crear una clase IngredientesJDBC dentro del paquete modelJDBC y deberemos digitar el siguiente código:
+
+```java
+package modelJDBC;
+
+import connection.connectionSQLSERVER;
+import java.sql.CallableStatement;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import javax.swing.table.DefaultTableModel;
+
+/**
+ *
+ * @author seth09
+ */
+public class IngredienteJDBC {
+    private final String SQL_INSERT_SP = "{CALL spAgregarIngrediente(?,?)}";
+    private final String SQL_UPDATE_SP = "{CALL spEditarIngrediente(?,?,?)}";
+    private final String SQL_DELETE_SP = "{CALL spEliminarIngrediente(?)}";
+    private final String SQL_SELECT_SP = "{CALL spObtenerIngredientePorNombre(?)}";
+
+    //Método para registrar la categoría
+    public int registrarIngredientes(String nombreIngrediente, String unidadMedida) {
+
+        //Objeto de conexión
+        Connection conn = null;
+        // prepareCall -> para realizar el llamado del procedimiento almacenado
+        CallableStatement cstmt = null;
+
+        int filaAfectadas = 0;
+
+        try {
+
+            conn = connectionSQLSERVER.getConnection(); //Se obtiene la conexion desde la clase Conexion SQL Server
+            cstmt = conn.prepareCall(SQL_INSERT_SP); //Se prepara la llamada al procedimiento 
+
+            //Se Sustituye los valores a enviar en el procedimiento almacenado
+            cstmt.setString(1, nombreIngrediente);
+            cstmt.setString(2, unidadMedida);
+
+            //Se ejecuta la consulta
+            System.out.println("Ejecutando la Registro del Ingrediente");
+            cstmt.execute();
+            filaAfectadas = cstmt.getUpdateCount();
+
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        } finally {
+            connectionSQLSERVER.close(cstmt);
+            connectionSQLSERVER.close(conn);
+        }
+
+        return filaAfectadas;
+
+    }
+
+    //Método para modificar Categoria
+    public int modificarIngrediente(int idIngrediente, String nombreIngrediente, String unidadMedida) {
+
+        //Objeto de conexión
+        Connection conn = null;
+        // prepareCall -> para realizar el llamado del procedimiento almacenado
+        CallableStatement cstmt = null;
+
+        int filaAfectadas = 0;
+
+        try {
+
+            conn = connectionSQLSERVER.getConnection(); //Se obtiene la conexion desde la clase Conexion SQL Server
+            cstmt = conn.prepareCall(SQL_UPDATE_SP); //Se prepara la llamada al procedimiento 
+
+            //Se Sustituye los valores a enviar en el procedimiento almacenado
+            cstmt.setInt(1, idIngrediente);
+                     cstmt.setString(2, nombreIngrediente);
+            cstmt.setString(3, unidadMedida);
+
+            //Se ejecuta la consulta
+            System.out.println("Ejecutando la modificación del Ingrediente");
+            cstmt.execute();
+            filaAfectadas = cstmt.getUpdateCount();
+
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        } finally {
+            connectionSQLSERVER.close(cstmt);
+            connectionSQLSERVER.close(conn);
+        }
+
+        return filaAfectadas;
+
+    }
+
+    //Método para eliminar Categoria
+    public int eliminarIngrediente(int idIngrediente) {
+
+        //Objeto de conexión
+        Connection conn = null;
+        // prepareCall -> para realizar el llamado del procedimiento almacenado
+        CallableStatement cstmt = null;
+
+        int filaAfectadas = 0;
+
+        try {
+
+            conn = connectionSQLSERVER.getConnection(); //Se obtiene la conexion desde la clase Conexion SQL Server
+            cstmt = conn.prepareCall(SQL_DELETE_SP); //Se prepara la llamada al procedimiento 
+
+            //Se Sustituye los valores a enviar en el procedimiento almacenado
+            cstmt.setInt(1, idIngrediente);
+
+            //Se ejecuta la consulta
+            System.out.println("Ejecutando la eliminación del ingrediente");
+            cstmt.execute();
+            filaAfectadas = cstmt.getUpdateCount();
+
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        } finally {
+            connectionSQLSERVER.close(cstmt);
+            connectionSQLSERVER.close(conn);
+        }
+
+        return filaAfectadas;
+    }
+
+    //Método para obtener las categorías
+    public DefaultTableModel consultarIngrediente(String nombreIngrediente) {
+        //Objeto de conexión
+        Connection conn = null;
+        // prepareCall -> para realizar el llamado del procedimiento almacenado
+        CallableStatement cstmt = null;
+        ResultSet rs = null;
+
+        //Creación del modelo de la tabla
+       DefaultTableModel modeloTabla = new DefaultTableModel();
+       modeloTabla.addColumn("ID");
+       modeloTabla.addColumn("Nombre");
+       modeloTabla.addColumn("Unidad Medida");
+       
+        
+        try {
+
+            conn = connectionSQLSERVER.getConnection(); //Se obtiene la conexion desde la clase Conexion SQL Server
+            cstmt = conn.prepareCall(SQL_SELECT_SP, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY); //Se prepara la llamada al procedimiento 
+
+            //Se Sustituye los valores a enviar en el procedimiento almacenado
+            cstmt.setString(1, nombreIngrediente);
+
+            //Se ejecuta la consulta
+            System.out.println("Ejecutando consulta de Categoria");
+            boolean resultado = cstmt.execute();
+
+            // Comprobar si hay un conjunto de resultados
+            if (resultado) {
+                // Devolver el conjunto de resultados
+                rs = cstmt.getResultSet();
+                while (rs.next()) {
+                    // Acceder a los datos de cada fila
+                    int id = rs.getInt("IdIngrediente");
+                    String nombre = rs.getString("Nombre");   
+                    String unidadMedida = rs.getString("UnidadMedida");
+                    modeloTabla.addRow(new Object[]{id, nombre, unidadMedida});
+                }
+            } 
+
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        } finally {
+            connectionSQLSERVER.close(cstmt);
+            connectionSQLSERVER.close(conn);
+            connectionSQLSERVER.close(rs);
+        }
+
+        return modeloTabla;
+    }
+}
+
+```
 
 
 ##### Clase PasosJDBC
@@ -1121,3 +1324,407 @@ Se deberá crear un JFrame con el nombre de frmControlCategoria el el cual se de
     <td>tblListaCategorias</td>
   </tr>
 </table>
+
+En este punto se deberá de crear la lógica para que la interfaz gráfica de usuario obtenga los datos y los envié a traves del JDBC a la base de datos, por esta razón en se deberá generar el siguiente código en el JFrame con el nombre de "frmCategoria":
+
+Como variables a nivel de clase se deberá crear las siguientes:
+
+```java
+   boolean nuevo = true; //Indicador para saber si es una categoría nueva
+    int idCategoria = 0; //Almacenara el Id de la categoría a modificar/eliminar
+    CategoriaJDBC cat = new CategoriaJDBC(); // Instancia de jdbc para el uso de los métodos
+```
+
+Ahora se deberá de crear dos métodos uno para limpiar los datos de los controles y el otro para obtener la información de las categorías de la base de datos:
+
+```java
+    public void cargarDatos(String categoria) {
+        //Carga el modelo de la tabla con sus datos, gracias al método ConsultarCategoria del JDBC
+        DefaultTableModel modelo = cat.consultarCategorias(categoria);
+        tblListaCategorias.setModel(modelo);
+    }
+    
+    public void limpiarDatos() {
+        txtNombreCat.setText("");
+        txtBuscarCat.setText("");
+        idCategoria = 0;
+        nuevo = true;
+    }
+```
+
+Ahora en el evento clic del botón de guardar se requiere el siguiente código:
+
+```java
+ private void btnGuardarCatActionPerformed(java.awt.event.ActionEvent evt) {                                              
+
+        String nombreCat = txtNombreCat.getText(); //Obtener el dato del textfield
+
+        if (nombreCat.equals("")) {
+            JOptionPane.showMessageDialog(this, "Debes digitar una nombre para la Categoría");
+            return;
+        }
+        int row = 0;
+        if (nuevo) {
+
+            row = cat.registrarCategoria(nombreCat); //Llamar al metodo que encarga de registrar la categoria
+
+            if (row > 0) {
+                JOptionPane.showMessageDialog(this, "Se Registro la Categoría");
+            } else {
+                JOptionPane.showMessageDialog(this, "No Se Registro la Categoría", "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+        } else {
+            row = cat.modificarCategoria(idCategoria, nombreCat); //Llamar al metodo que encarga de registrar la categoria
+            if (row > 0) {
+                JOptionPane.showMessageDialog(this, "Se Modifico la Categoría");
+            } else {
+                JOptionPane.showMessageDialog(this, "No Se Modifico la Categoría", "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+        }
+
+        limpiarDatos();
+        cargarDatos(null);
+    }   
+```
+
+Luego se deberá generar un evento de tipo Mouse Pressed para la jTable y en el escribir el siguiente código:
+
+```java
+    private void tblListaCategoriasMousePressed(java.awt.event.MouseEvent evt) {                                                
+
+        idCategoria = Integer.parseInt(tblListaCategorias.getValueAt(tblListaCategorias.getSelectedRow(), 0).toString());
+        txtNombreCat.setText(tblListaCategorias.getValueAt(tblListaCategorias.getSelectedRow(), 1).toString());
+
+        if (idCategoria > 0) {
+            nuevo = false;
+        }
+    }   
+```
+
+En el código anterior lo que se obtiene el la fila seleccionada y los datos del id y el nombre de la categoría para su posterior modificación.
+
+Luego se deberá de crear un evento KeyPress en el control txtBuscarCat y en el se digitar el siguiente código:
+
+```java
+    private void txtBuscarCatKeyReleased(java.awt.event.KeyEvent evt) {                                         
+        String filtro = txtBuscarCat.getText();
+        //Se invoca el método para cargar los datos pero se le pasa como parámetro el texto a buscar
+        cargarDatos(filtro);
+    }     
+```
+
+En el evento clic (actionPerformed) del botón de limpiar se escribe el siguiente código:
+
+```java
+    private void btnLimpiarCatActionPerformed(java.awt.event.ActionEvent evt) {                                              
+        limpiarDatos();
+    }             
+``` 
+
+En el evento clic (actionPerformed) del botón de Eliminar se deberá colocar el siguiente código:
+
+```java
+
+    private void btnEliminarCatActionPerformed(java.awt.event.ActionEvent evt) {                                               
+        if(idCategoria == 0){
+            JOptionPane.showMessageDialog(this, "Debes seleccionar una categoría para eliminarla", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        int opcion = JOptionPane.showConfirmDialog(this, "Esta segura que desea eliminar la categoría seleccionada?");
+
+        if(opcion == 0){
+            cat.eliminarCategoria(idCategoria);
+            JOptionPane.showMessageDialog(this, "Se elimino la Categoría");
+            limpiarDatos();
+            cargarDatos(null);
+        }
+    } 
+```
+
+Luego se deberá modificar el constructor con nombre frmCategoria()
+
+```java
+    public frmCategoria() {
+        initComponents();
+        cargarDatos(null); //Se carga la lista de categorías 
+    }
+```
+
+**El código Completo de la GUI de categoría se muestra a continuación:**
+
+[Código de frmCategoria](./appRecetas-sqlserver-bdII/src/main/java/gui/frmCategoria.java)
+
+#### Formulario de Ingredientes
+
+Se deberá crear un JFrame con el nombre de frmControlIngredientes el el cual se deberá crear la interfaz similar a la que se muestra en la imagen:
+
+![Formulario Categoría](./recursosTutorial/image/guiIngrediente.png)
+
+**Desglose de controles utilizados:**
+<table>
+ <thead>
+    <tr> 
+        <th>Control </th>
+        <th>Propiedad </th>
+        <th>Valor</th>
+    </tr>
+  </thead>
+  <tbody>
+  <tr>
+  <td>JFrame</td>
+    <td>defaultCloseOperation</td>
+    <td>EXIT_ON_CLOSE</td>
+  </tr>
+  <tr>
+    <td>jLabel</td>
+    <td>text</td>
+    <td>Control de Ingredientes</td>
+  </tr>
+  <tr>
+    <td>JPanel</td>
+    <td>border → titled border → title</td>
+    <td>Datos de la Ingrediente</td>
+  </tr>
+  <tr>
+    <td>JPanel</td>
+    <td>border → titled border → title</td>
+    <td>Lista de Ingredientes</td>
+  </tr>
+  <tr>
+    <td>JLabel</td>
+    <td>text</td>
+    <td>Nombre del Ingrediente</td>
+  </tr>
+  <tr>
+    <td rowspan=2>Text Field</td>
+    <td>text</td>
+    <td>"  " 👉🏻 Vació</td>
+  </tr>
+  <tr>
+    <td>Variable Name</td>
+    <td>txtNombreIng</td>
+  </tr>
+<tr>
+    <td>JLabel</td>
+    <td>text</td>
+    <td>Unidad de medida</td>
+  </tr>
+  <tr>
+    <td rowspan=2>Text Field</td>
+    <td>text</td>
+    <td>"  " 👉🏻 Vació</td>
+  </tr>
+  <tr>
+    <td>Variable Name</td>
+    <td>txtUnidadMedidaIng</td>
+  </tr>
+  <tr>
+    <td rowspan=3>Button</td>
+    <td>text</td>
+    <td>Guardar</td>
+  </tr>
+  <tr>
+    <td>Variable Name</td>
+    <td>btnGuardar</td>
+  </tr>
+    <tr>
+    <td>Icon</td>
+    <td>Buscar el icono en el paquete de recurso</td>
+  </tr>
+
+ <tr>
+    <td rowspan=3>Button</td>
+    <td>text</td>
+    <td>Eliminar</td>
+  </tr>
+  <tr>
+    <td>Variable Name</td>
+    <td>btnEliminar</td>
+  </tr>
+    <tr>
+    <td>Icon</td>
+    <td>Buscar el icono en el paquete de recurso</td>
+  </tr>
+
+ <tr>
+    <td rowspan=3>Button</td>
+    <td>text</td>
+    <td>Limpiar</td>
+  </tr>
+  <tr>
+    <td>Variable Name</td>
+    <td>btnLimpiar</td>
+  </tr>
+    <tr>
+    <td>Icon</td>
+    <td>Buscar el icono en el paquete de recurso</td>
+  </tr>
+   <tr>
+    <td>JLabel</td>
+    <td>text</td>
+    <td>Buscar:</td>
+  </tr>
+  <tr>
+    <td rowspan=2>Text Field</td>
+    <td>text</td>
+    <td>"  " 👉🏻 Vació</td>
+  </tr>
+  <tr>
+    <td>Variable Name</td>
+    <td>txtBuscarIng</td>
+  </tr>
+  </tbody>
+
+  <tr>
+    <td>Table</td>
+    <td>Variable Name</td>
+    <td>tblListaIngredientes</td>
+  </tr>
+</table>
+
+En este punto se deberá de crear la lógica para que la interfaz gráfica de usuario obtenga los datos y los envié a traves del JDBC a la base de datos, por esta razón en se deberá generar el siguiente código en el JFrame con el nombre de "frmIngredientes":
+
+Como variables a nivel de clase se deberá crear las siguientes:
+
+```java  
+    boolean nuevo = true; //Indicador para saber si es una ingrediente nueva
+    int id = 0; //Almacenara el Id del ingrediente a modificar/eliminar
+    IngredienteJDBC ingredientejdbc = new IngredienteJDBC(); // Instancia de jdbc para el uso de los métodos
+```
+
+Ahora se deberá de crear dos métodos uno para limpiar los datos de los controles y el otro para obtener la información de los ingredientes de la base de datos:
+
+```java
+    public void cargarDatos(String ingrediente) {
+
+        //VCarga el modelo de la tabla con sus datos, gracias al método ConsultarIngredientes del JDBC
+        DefaultTableModel modelo = ingredientejdbc.consultarIngrediente(ingrediente);
+        tblListaIngredientes.setModel(modelo);
+    }
+    
+    public void limpiarDatos() {
+        txtNombreIng.setText("");
+        txtUnidadMedidaIng.setText("");
+        txtBuscarIng.setText("");
+        id = 0;
+        nuevo = true;
+    }
+```
+
+Ahora en el evento clic del botón de guardar se requiere el siguiente código:
+
+```java
+  private void btnGuardarIngActionPerformed(java.awt.event.ActionEvent evt) {                                              
+
+        String nombreIng = txtNombreIng.getText(); //Obtener el dato del textfield
+        String unidadMedida = txtUnidadMedidaIng.getText();
+        
+        if (nombreIng.equals("")) {
+            JOptionPane.showMessageDialog(this, "Debes digitar una nombre para la ingrediente");
+            return;
+        }
+          if (unidadMedida.equals("")) {
+            JOptionPane.showMessageDialog(this, "Debes digitar una unidad de medida para la ingrediente");
+            return;
+        }
+        int row = 0;
+        if (nuevo) {
+
+            row = ingredientejdbc.registrarIngredientes(nombreIng,unidadMedida); //Llamar al método que encarga de registrar el Ingrediente
+
+            if (row > 0) {
+                JOptionPane.showMessageDialog(this, "Se Registro el ingrediente");
+            } else {
+                JOptionPane.showMessageDialog(this, "No Se Registro el Ingrediente", "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+        } else {
+            row = ingredientejdbc.modificarIngrediente(id, nombreIng, unidadMedida); //Llamar al método que encarga de registrar el Ingrediente
+            if (row > 0) {
+                JOptionPane.showMessageDialog(this, "Se modifico el ingrediente");
+            } else {
+                JOptionPane.showMessageDialog(this, "No Se modifico el ingrediente", "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+        }
+
+        limpiarDatos();
+        cargarDatos(null);
+    }                                             
+     
+```
+
+Luego se deberá generar un evento de tipo Mouse Pressed para la jTable y en el escribir el siguiente código:
+
+```java
+ private void tblListaIngredientesMousePressed(java.awt.event.MouseEvent evt) {                                                  
+
+        id = Integer.parseInt(tblListaIngredientes.getValueAt(tblListaIngredientes.getSelectedRow(), 0).toString());
+        txtNombreIng.setText(tblListaIngredientes.getValueAt(tblListaIngredientes.getSelectedRow(), 1).toString());
+        txtUnidadMedidaIng.setText(tblListaIngredientes.getValueAt(tblListaIngredientes.getSelectedRow(), 2).toString());
+
+        if (id > 0) {
+            nuevo = false;
+        }
+    }                                                 
+  
+```
+
+En el código anterior lo que se obtiene el la fila seleccionada y los datos del id, nombre y la unidad de medida  del ingrediente para su posterior modificación.
+
+Luego se deberá de crear un evento KeyPress en el control txtBuscarIng y en el se digitar el siguiente código:
+
+```java
+  private void txtBuscarIngKeyReleased(java.awt.event.KeyEvent evt) {                                         
+        String filtro = txtBuscarIng.getText();
+        //Se invoca el método para cargar los datos pero se le pasa como parámetro el texto a buscar
+        cargarDatos(filtro);
+    }     
+```
+
+En el evento clic (actionPerformed) del botón de limpiar se escribe el siguiente código:
+
+```java
+    private void btnLimpiarIngActionPerformed(java.awt.event.ActionEvent evt) {                                              
+        limpiarDatos();
+    }                   
+``` 
+
+En el evento clic (actionPerformed) del botón de Eliminar se deberá colocar el siguiente código:
+
+```java
+
+    private void btnEliminarIngActionPerformed(java.awt.event.ActionEvent evt) {                                               
+        if(id == 0){
+            JOptionPane.showMessageDialog(this, "Debes seleccionar un ingrediente para eliminarla", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        int opcion = JOptionPane.showConfirmDialog(this, "Esta segura que desea eliminar el ingrediente seleccionada?");
+
+        if(opcion == 0){
+            ingredientejdbc.eliminarIngrediente(id);
+            JOptionPane.showMessageDialog(this, "Se elimino el ingrediente");
+            limpiarDatos();
+            cargarDatos(null);
+        }
+    }                                              
+
+```
+
+Luego se deberá modificar el constructor con nombre frmCategoria()
+
+```java
+    public frmIngredientes() {
+        initComponents();
+        cargarDatos(null);
+    }
+
+```
+
+**El código Completo de la GUI de categoría se muestra a continuación:**
+
+[Código de frmIngredientes](./appRecetas-sqlserver-bdII/src/main/java/gui/frmIngredientes.java)

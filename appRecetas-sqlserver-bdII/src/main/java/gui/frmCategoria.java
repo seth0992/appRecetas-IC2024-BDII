@@ -23,6 +23,7 @@ public class frmCategoria extends javax.swing.JFrame {
      */
     public frmCategoria() {
         initComponents();
+        cargarDatos(null); //Se carga la lista de categorías 
     }
 
     /**
@@ -242,7 +243,7 @@ public class frmCategoria extends javax.swing.JFrame {
             return;
         }
 
-        int opcion = JOptionPane.showConfirmDialog(this, "Esta segura que desea eliminar la categoía seleccionada?");
+        int opcion = JOptionPane.showConfirmDialog(this, "Esta segura que desea eliminar la categoría seleccionada?");
 
         if(opcion == 0){
             cat.eliminarCategoria(idCategoria);
