@@ -170,21 +170,99 @@ A continuación se deberá de elaborar cada uno de los siguientes procedimientos
 
    3. Agregar receta: Crear una nueva receta, tomar en cuenta la posibilidad de enviar las categorías a la que pertenece la receta.
 
-    ```sql
-    CREATE or ALTER PROCEDURE spAgregarReceta
-    @nombre VARCHAR(100),
-    @descripcion TEXT,
-    @tiempoPreparacion INT,
-    @dificultad INT,
-    @Imagen IMAGE
+    ```sql    
+    CREATE OR ALTER PROCEDURE spAgregarReceta
+        @nombre NVARCHAR(100),
+        @descripcion NVARCHAR(MAX),
+        @tiempoPreparacion INT,
+        @dificultad INT,
+        @Imagen VARBINARY(MAX),
+    	@idReceta INT OUTPUT -- Parámetro de salida para el ID de la receta
     AS
-    BEGIN    	
-        INSERT INTO tblRecetas (Nombre, Descripcion, TiempoPreparacion,Dificultad,Imagen,FechaModificacion) VALUES (@nombre,@descripcion,@tiempoPreparacion,@dificultad,@Imagen,GETDATE())
-    END
+    BEGIN
+        BEGIN TRANSACTION;
+    
+        BEGIN TRY
+           
+    
+            INSERT INTO tblRecetas (Nombre, Descripcion, TiempoPreparacion, Dificultad, Imagen, FechaModificacion) 
+            VALUES (@nombre, @descripcion, @tiempoPreparacion, @dificultad, @Imagen, GETDATE());
+    
+            SET @idReceta = SCOPE_IDENTITY(); -- Asignar el ID de la receta a la variable de salida
+    
+    
+            COMMIT TRANSACTION;
+        END TRY
+        BEGIN CATCH
+            ROLLBACK TRANSACTION;
+             -- Devolver un mensaje de error al cliente
+            DECLARE @ErrorMessage NVARCHAR(4000) = ERROR_MESSAGE();
+            RAISERROR(@ErrorMessage, 16, 1);
+            RETURN; -- Terminar la ejecución del procedimiento almacenado
+            THROW;
+        END CATCH;
+    END;
+
     
     -- Probar el procedimiento almacenado (SP)
     EXEC spAgregarReceta 'Tres leches', 'Postre que es un queque con tres leches', 60, 2, null;
     GO
+    ```
+
+    ***Mejora del procedimiento almacenado anterior para que permita agregar una nueva receta a la base de datos, junto con sus categorías e ingredientes asociados. utilizado tipos personalizados de datos SQL***
+
+    ```sql
+    -- Definición del tipo de tabla ListaCategorias
+    CREATE TYPE dbo.ListaCategorias AS TABLE (
+        Id INT
+    );
+    GO
+    
+    -- Definición del tipo de tabla ListaIngredientes
+    CREATE TYPE dbo.ListaIngredientes AS TABLE (
+        Id INT,
+        cantidad DECIMAL(18,2)
+    );
+    GO
+    
+    CREATE OR ALTER PROCEDURE spAgregarReceta
+        @nombre NVARCHAR(100),
+        @descripcion NVARCHAR(MAX),
+        @tiempoPreparacion INT,
+        @dificultad INT,
+        @Imagen VARBINARY(MAX),
+        @idsCategorias dbo.ListaCategorias READONLY,
+        @idsIngredientes dbo.ListaIngredientes READONLY
+    AS
+    BEGIN
+        BEGIN TRANSACTION;
+    
+        BEGIN TRY
+            DECLARE @idReceta INT;
+    
+            INSERT INTO tblRecetas (Nombre, Descripcion, TiempoPreparacion, Dificultad, Imagen, FechaModificacion) 
+            VALUES (@nombre, @descripcion, @tiempoPreparacion, @dificultad, @Imagen, GETDATE());
+    
+            SET @idReceta = SCOPE_IDENTITY();
+    
+            INSERT INTO tblRecetasCategorias (IdReceta, IdCategoria) 
+            SELECT @idReceta, ID FROM @idsCategorias;
+    
+            INSERT INTO tblRecetasIngredientes (IdReceta, IdIngrediente, Cantidad) 
+            SELECT @idReceta, ID, Cantidad FROM @idsIngredientes;
+    
+            COMMIT TRANSACTION;
+        END TRY
+        BEGIN CATCH
+            ROLLBACK TRANSACTION;
+             -- Devolver un mensaje de error al cliente
+            DECLARE @ErrorMessage NVARCHAR(4000) = ERROR_MESSAGE();
+            RAISERROR(@ErrorMessage, 16, 1);
+            RETURN; -- Terminar la ejecución del procedimiento almacenado
+            THROW;
+        END CATCH;
+    END;
+    
     ```
 
    4. Editar receta: Modificar la información de una receta existente.
@@ -205,9 +283,10 @@ A continuación se deberá de elaborar cada uno de los siguientes procedimientos
     ---- Probar el procedimiento almacenado (SP)
     EXEC spEditarReceta 1,'Tres leches El mejor', 'Postre que es un queque con tres leches', 60, 2, null;
     GO
+
     ```
 
-   5. Eliminar recetas: Eliminar una receta del sistema.
+5. Eliminar recetas: Eliminar una receta del sistema.
 
     ```sql
     CREATE or ALTER PROCEDURE spEliminarReceta
@@ -341,7 +420,21 @@ A continuación se deberá de elaborar cada uno de los siguientes procedimientos
     GO
     ```
 
-   4. Editar categoría: Modificar la información de una categoría existente.
+   4. Agregar Categorias a las recetas recetas
+   ```sql 
+    -- Agregar Categoria a recetas
+    CREATE PROCEDURE spAgregarCategoriasAReceta
+    @IdReceta INT,
+    @IdCategoria INT
+    AS
+    BEGIN
+        INSERT INTO tblRecetasCategorias(IdReceta, IdCategoria)
+        VALUES (@IdReceta, @IdCategoria);
+    END;
+    GO
+    ``` 
+
+   5. Editar categoría: Modificar la información de una categoría existente.
 
     ```sql
     CREATE PROCEDURE spEditarCategoria
@@ -356,7 +449,7 @@ A continuación se deberá de elaborar cada uno de los siguientes procedimientos
     GO
     ```
 
-   5. Eliminar categoría: Eliminar una categoría del sistema.
+   6. Eliminar categoría: Eliminar una categoría del sistema.
 
     ```sql
     CREATE PROCEDURE spEliminarCategoria
@@ -368,7 +461,7 @@ A continuación se deberá de elaborar cada uno de los siguientes procedimientos
     GO
     ```
 
-    6. Obtener categorías: Obtener una lista de todas las categorías según nombre (Filtro de búsqueda).
+    7. Obtener categorías: Obtener una lista de todas las categorías según nombre (Filtro de búsqueda).
 
     ```sql
     CREATE PROCEDURE spObtenerCategoriasPorNombre
@@ -1201,7 +1294,6 @@ public class IngredienteJDBC {
 
 ```
 
-
 ##### Clase PasosJDBC
 
 ##### Clase RecetasJDBC
@@ -1219,7 +1311,7 @@ Se deberá crear un JFrame con el nombre de frmControlCategoria el el cual se de
 **Desglose de controles utilizados:**
 <table>
  <thead>
-    <tr> 
+    <tr>
         <th>Control </th>
         <th>Propiedad </th>
         <th>Valor</th>
@@ -1421,7 +1513,7 @@ En el evento clic (actionPerformed) del botón de limpiar se escribe el siguient
     private void btnLimpiarCatActionPerformed(java.awt.event.ActionEvent evt) {                                              
         limpiarDatos();
     }             
-``` 
+```
 
 En el evento clic (actionPerformed) del botón de Eliminar se deberá colocar el siguiente código:
 
@@ -1466,7 +1558,7 @@ Se deberá crear un JFrame con el nombre de frmControlIngredientes el el cual se
 **Desglose de controles utilizados:**
 <table>
  <thead>
-    <tr> 
+    <tr>
         <th>Control </th>
         <th>Propiedad </th>
         <th>Valor</th>
@@ -1691,7 +1783,7 @@ En el evento clic (actionPerformed) del botón de limpiar se escribe el siguient
     private void btnLimpiarIngActionPerformed(java.awt.event.ActionEvent evt) {                                              
         limpiarDatos();
     }                   
-``` 
+```
 
 En el evento clic (actionPerformed) del botón de Eliminar se deberá colocar el siguiente código:
 

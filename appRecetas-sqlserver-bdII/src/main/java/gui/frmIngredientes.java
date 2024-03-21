@@ -24,6 +24,7 @@ public class frmIngredientes extends javax.swing.JFrame {
      */
     public frmIngredientes() {
         initComponents();
+        cargarDatos(null);
     }
 
     /**
@@ -238,7 +239,7 @@ public class frmIngredientes extends javax.swing.JFrame {
 
     private void txtBuscarIngKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtBuscarIngKeyReleased
         String filtro = txtBuscarIng.getText();
-        //Se invoca el método para cargar los datos pero se le pasa como parametro el texto a buscar
+        //Se invoca el método para cargar los datos pero se le pasa como parámetro el texto a buscar
         cargarDatos(filtro);
     }//GEN-LAST:event_txtBuscarIngKeyReleased
 
@@ -302,7 +303,7 @@ public class frmIngredientes extends javax.swing.JFrame {
    
     public void cargarDatos(String ingrediente) {
 
-        //VCarga el modelo de la tabla con sus datos, gracias al metodo ConsultarCategoria del JDBC
+        //Carga el modelo de la tabla con sus datos, gracias al método ConsultarCategoria del JDBC
         DefaultTableModel modelo = ingredientejdbc.consultarIngrediente(ingrediente);
         tblListaIngredientes.setModel(modelo);
     }
