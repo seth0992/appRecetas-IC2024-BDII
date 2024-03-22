@@ -432,9 +432,21 @@ A continuación se deberá de elaborar cada uno de los siguientes procedimientos
         VALUES (@IdReceta, @IdCategoria);
     END;
     GO
-    ``` 
+    ```
 
-   5. Editar categoría: Modificar la información de una categoría existente.
+   5. Eliminar una Categoria a una receta:
+
+    ```sql
+    CREATE OR ALTER PROCEDURE spEliminarCategoriaAReceta
+    @idReceta INT,
+    @idCategoria INT
+    AS
+    BEGIN
+        DELETE FROM tblRecetasCategorias WHERE IdCategoria = @idCategoria AND IdReceta = @idReceta
+    END
+    ```
+
+   6. Editar categoría: Modificar la información de una categoría existente.
 
     ```sql
     CREATE PROCEDURE spEditarCategoria
@@ -449,7 +461,7 @@ A continuación se deberá de elaborar cada uno de los siguientes procedimientos
     GO
     ```
 
-   6. Eliminar categoría: Eliminar una categoría del sistema.
+   7. Eliminar categoría: Eliminar una categoría del sistema.
 
     ```sql
     CREATE PROCEDURE spEliminarCategoria
@@ -461,7 +473,7 @@ A continuación se deberá de elaborar cada uno de los siguientes procedimientos
     GO
     ```
 
-    7. Obtener categorías: Obtener una lista de todas las categorías según nombre (Filtro de búsqueda).
+    8. Obtener categorías: Obtener una lista de todas las categorías según nombre (Filtro de búsqueda).
 
     ```sql
     CREATE PROCEDURE spObtenerCategoriasPorNombre
@@ -586,12 +598,61 @@ A continuación se deberá de elaborar cada uno de los siguientes procedimientos
     GO
     ```
 
-6. Funciones para el sistema:
-   1. Función para contar cuentos ingredientes tiene un receta concreta.
-7. Triggers:
-   1. Trigger para actualizar la fecha de modificación de una receta.
-   2. Trigger para eliminar los pasos de una receta al eliminarla
-   3. Trigger para registrar el historial de cambios en una receta - Agregar la tabla con los datos idReceta, fechaCambio, columna, valorAnterior, ValorNuevo.
+6. Triggers:  
+   1. Trigger para controlar que no se registre dos veces el mismo ingrediente a una receta
+
+   ```sql
+    CREATE OR ALTER TRIGGER trgPreventDuplicateIngredients
+    ON dbo.tblRecetasIngredientes
+    instead OF  INSERT
+    AS
+    BEGIN
+        -- Verificar si se están insertando registros duplicados
+        IF EXISTS (
+            SELECT 1
+            FROM inserted i
+            INNER JOIN dbo.tblRecetasIngredientes ri ON i.IdReceta = ri.IdReceta AND i.IdIngrediente = ri.IdIngrediente
+        )
+        BEGIN
+            -- Si se detecta un ingrediente duplicado, generar un mensaje de error
+            RAISERROR ('No se permite agregar ingredientes duplicados para una receta.', 16, 1);
+            -- Rollback de la transacción para evitar la inserción de registros duplicados
+            ROLLBACK TRANSACTION;
+        END
+    	ELSE
+    	BEGIN
+    		INSERT INTO tblRecetasIngredientes SELECT * FROM inserted
+    	END
+    END;
+    ```
+
+   2. Trigger para controlar que no se registre dos veces la misma categoría a una receta
+
+    ```sql
+    CREATE or ALTER TRIGGER trgPreventDuplicateCategories
+    ON dbo.tblRecetasCategorias
+    instead OF INSERT
+    AS
+    BEGIN
+        -- Verificar si se están insertando registros duplicados
+        IF EXISTS (
+            SELECT 1
+            FROM inserted i
+            INNER JOIN dbo.tblRecetasCategorias rc ON i.IdReceta = rc.IdReceta AND i.IdCategoria = rc.IdCategoria
+        )
+        BEGIN
+            -- Si se detecta una categoría duplicada, generar un mensaje de error
+            RAISERROR ('No se permite agregar categorías duplicadas para una receta.', 16, 1);
+            -- Rollback de la transacción para evitar la inserción de registros duplicados
+            ROLLBACK TRANSACTION;
+        END
+    	ELSE
+    	BEGIN
+    		INSERT INTO tblRecetasCategorias SELECT * FROM inserted
+    	END
+    END;
+
+    ```
 
 ### Configuración de SQL SERVER
 
@@ -803,44 +864,54 @@ public static void close(CallableStatement cstmt) {
 **La clase completa quedara de la siguiente manera:**
 
 ```java
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package connection;
 
 import java.sql.*;
+
 /**
- *
+ * Esta clase proporciona métodos para establecer una conexión con una base de datos SQL Server
+ * y para cerrar los recursos de conexión de manera segura.
+ * Requiere el driver JDBC de SQL Server para funcionar correctamente.
+ * 
  * @author seth
  */
-public class connectionSQLServer {
+public class connectionSQLSERVER {
     
-    //String que especifica el driver de conexión
+    // String que especifica el driver de conexión
     private static String JDBC_DRIVER = "com.microsoft.sqlserver.jdbc.SQLServerDriver";
-    //String que especifica el nombre de la base de datos a la que se realizara la conexión
+    
+    // String que especifica el nombre de la base de datos a la que se realizará la conexión
     private static String JDBC_DB = "dbGestorRecetas";
-    //String que especifica el nombre de usuario con el que se conectara a la BD
+    
+    // String que especifica el nombre de usuario con el que se conectará a la BD
     private static String JDBC_USER = "user1";
-    //String que especifica la contraseña del usuario con el que se conectara a la BD
+    
+    // String que especifica la contraseña del usuario con el que se conectará a la BD
     private static String JDBC_PASS = "1234";
-    //Variable que almacena el driver creado.
+    
+    // Variable que almacena el driver creado
     private static Driver driver = null;
-    //String que especifica la ruta de conexión a la base de datos 
+    
+    // String que especifica la ruta de conexión a la base de datos 
     private static String JDBC_URL = "jdbc:sqlserver://localhost:1433;databaseName="+JDBC_DB+";encrypt=false";
 
+    /**
+     * Método para obtener una conexión a la base de datos.
+     * 
+     * @return La conexión establecida con la base de datos.
+     * @throws SQLException si ocurre un error al establecer la conexión.
+     */
     public static synchronized Connection getConnection() throws SQLException {
 
         if (driver == null) {
             try {
-
-                //Se Carga el driver JDBC
+                // Se carga el driver JDBC
                 Class jdbcDriverClass = Class.forName(JDBC_DRIVER);
 
-                //Utiliza para crear una instancia de la clase del controlador JDBC cargada previamente
+                // Se utiliza para crear una instancia de la clase del controlador JDBC cargada previamente
                 driver = (Driver) jdbcDriverClass.getDeclaredConstructor().newInstance();
 
-                //Se utiliza para registrar el controlador JDBC que has creado previamente con la instancia
+                // Se utiliza para registrar el controlador JDBC que has creado previamente con la instancia
                 DriverManager.registerDriver(driver);
 
             } catch (Exception ex) {
@@ -848,11 +919,15 @@ public class connectionSQLServer {
                 ex.printStackTrace();
             }
         }
-        //Establecer una conexión a la base de datos utilizando los detalles de conexión proporcionados
+        // Establecer una conexión a la base de datos utilizando los detalles de conexión proporcionados
         return DriverManager.getConnection(JDBC_URL, JDBC_USER, JDBC_PASS);
     }
 
-    //cierra los ResultSet abiertos.
+    /**
+     * Método para cerrar un ResultSet abierto.
+     * 
+     * @param rs El ResultSet que se va a cerrar.
+     */
     public static void close(ResultSet rs) {
         try {
             if (rs != null) {
@@ -863,7 +938,11 @@ public class connectionSQLServer {
         }
     }
 
-    //Cierra los PreparedStatement abiertos, si lo están
+    /**
+     * Método para cerrar un PreparedStatement abierto.
+     * 
+     * @param stmt El PreparedStatement que se va a cerrar.
+     */
     public static void close(PreparedStatement stmt) {
         try {
             if (stmt != null) {
@@ -874,7 +953,11 @@ public class connectionSQLServer {
         }
     }
 
-    //Cierra la conexión abierta, si lo están
+    /**
+     * Método para cerrar una conexión abierta.
+     * 
+     * @param conn La conexión que se va a cerrar.
+     */
     public static void close(Connection conn) {
         try {
             if (conn != null) {
@@ -885,7 +968,11 @@ public class connectionSQLServer {
         }
     }
 
-    //Cierra el CallableStatement abierta, si lo están
+    /**
+     * Método para cerrar un CallableStatement abierto.
+     * 
+     * @param cstmt El CallableStatement que se va a cerrar.
+     */
     public static void close(CallableStatement cstmt) {
         try {
             if (cstmt != null) {
@@ -894,7 +981,7 @@ public class connectionSQLServer {
         } catch (SQLException ex) {
             ex.printStackTrace();
         }
-  }
+    }
 
 }
 ```
@@ -1294,9 +1381,280 @@ public class IngredienteJDBC {
 
 ```
 
-##### Clase PasosJDBC
+##### Clase IngredientesPorRecetaJDBC
+
+Ahora vamos a crear una clase IngredientesPorRecetaJDBC dentro del paquete modelJDBC y deberemos digitar el siguiente código:
+
+```java
+package modelJDBC;
+
+import connection.connectionSQLSERVER;
+import java.sql.CallableStatement;
+import java.sql.Connection;
+import java.sql.SQLException;
+
+/**
+ *
+ * @author seth
+ */
+public class IngredientesPorRecetaJDBC {
+    
+    private final String SQL_INSERT_SP_INGREDIENTES = "{CALL spAgregarIngredientesAReceta(?,?,?)}";
+    private final String SQL_DELETE_SP_INGREDIENTES = "{CALL spEliminarIngredienteDeReceta(?,?)}";
+    
+    public int registrarIngredientesReceta(int idReceta, Object[][] ingredientes) {
+        Connection conn = null;
+        CallableStatement cstmt = null;
+
+        int filasAfectadas = 0;
+
+        try {
+            conn = connectionSQLSERVER.getConnection(); // Obtener la conexión una vez antes del bucle
+            cstmt = conn.prepareCall(SQL_INSERT_SP_INGREDIENTES); // Preparar la llamada al procedimiento
+
+            for (Object[] categoria : ingredientes) {
+                // Sustituir los valores a enviar en el procedimiento almacenado
+                cstmt.setInt(1, idReceta);
+                cstmt.setInt(2, Integer.parseInt(categoria[0].toString()));
+                cstmt.setDouble(3, Double.parseDouble(categoria[2].toString()));
+
+                // Ejecutar la consulta
+                System.out.println("Ejecutando la Registro de Categoria a la receta");
+                cstmt.execute();
+                filasAfectadas += cstmt.getUpdateCount();
+            }
+
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        } finally {
+            connectionSQLSERVER.close(cstmt);
+            connectionSQLSERVER.close(conn); // Cerrar la conexión después de salir del bucle
+        }
+
+        return filasAfectadas;
+    }
+    
+       //Método para eliminar Categoria a un ingrediente ya creada
+    public int eliminarCategoria(int idIngrediente, int idReceta) {
+
+        //Objeto de conexión
+        Connection conn = null;
+        // prepareCall -> para realizar el llamado del procedimiento almacenado
+        CallableStatement cstmt = null;
+
+        int filaAfectadas = 0;
+
+        try {
+
+            conn = connectionSQLSERVER.getConnection(); //Se obtiene la conexion desde la clase Conexion SQL Server
+            cstmt = conn.prepareCall(SQL_DELETE_SP_INGREDIENTES); //Se prepara la llamada al procedimiento 
+
+            //Se Sustituye los valores a enviar en el procedimiento almacenado
+            cstmt.setInt(1, idReceta);
+            cstmt.setInt(2, idIngrediente);
+            //Se ejecuta la consulta
+            System.out.println("Ejecutando la Registro de Categoria");
+            cstmt.execute();
+            filaAfectadas = cstmt.getUpdateCount();
+
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        } finally {
+            connectionSQLSERVER.close(cstmt);
+            connectionSQLSERVER.close(conn);
+        }
+
+        return filaAfectadas;
+    }
+    
+
+}
+
+```
+
+##### Clase CategoriaPorRecetaJDBC
+
+Ahora vamos a crear una clase CategoriaPorRecetaJDBC dentro del paquete modelJDBC y deberemos digitar el siguiente código:
+
+```java
+package modelJDBC;
+
+import connection.connectionSQLSERVER;
+import java.sql.CallableStatement;
+import java.sql.Connection;
+import java.sql.SQLException;
+
+/**
+ *
+ * @author seth
+ */
+public class CategoriaPorRecetaJDBC {
+    
+    private final String SQL_INSERT_SP_CATEGORIAS = "{CALL spAgregarCategoriasAReceta(?,?)}";
+    private final String SQL_DELETE_SP_CATEGORIAS = "{CALL spEliminarCategoriaAReceta(?,?)}";
+    
+    public int registrarCategoriaReceta(int idReceta, Object[][] categorias) {
+        Connection conn = null;
+        CallableStatement cstmt = null;
+
+        int filasAfectadas = 0;
+
+        try {
+            conn = connectionSQLSERVER.getConnection(); // Obtener la conexión una vez antes del bucle
+            cstmt = conn.prepareCall(SQL_INSERT_SP_CATEGORIAS); // Preparar la llamada al procedimiento
+
+            for (Object[] categoria : categorias) {
+                // Sustituir los valores a enviar en el procedimiento almacenado
+                cstmt.setInt(1, idReceta);
+                cstmt.setInt(2, Integer.parseInt(categoria[0].toString()));
+
+                // Ejecutar la consulta
+                System.out.println("Ejecutando la Registro de Categoria a la receta");
+                cstmt.execute();
+                filasAfectadas += cstmt.getUpdateCount();
+            }
+
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        } finally {
+            connectionSQLSERVER.close(cstmt);
+            connectionSQLSERVER.close(conn); // Cerrar la conexión después de salir del bucle
+        }
+
+        return filasAfectadas;
+    }
+    
+     //Método para eliminar Categoria a una receta ya creada
+    public int eliminarCategoria(int idCategoria, int idReceta) {
+
+        //Objeto de conexión
+        Connection conn = null;
+        // prepareCall -> para realizar el llamado del procedimiento almacenado
+        CallableStatement cstmt = null;
+
+        int filaAfectadas = 0;
+
+        try {
+
+            conn = connectionSQLSERVER.getConnection(); //Se obtiene la conexion desde la clase Conexion SQL Server
+            cstmt = conn.prepareCall(SQL_DELETE_SP_CATEGORIAS); //Se prepara la llamada al procedimiento 
+
+            //Se Sustituye los valores a enviar en el procedimiento almacenado
+            cstmt.setInt(1, idReceta);
+            cstmt.setInt(2, idCategoria);
+            //Se ejecuta la consulta
+            System.out.println("Ejecutando la Registro de Categoria");
+            cstmt.execute();
+            filaAfectadas = cstmt.getUpdateCount();
+
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        } finally {
+            connectionSQLSERVER.close(cstmt);
+            connectionSQLSERVER.close(conn);
+        }
+
+        return filaAfectadas;
+    }
+    
+    
+}
+
+```
 
 ##### Clase RecetasJDBC
+
+Ahora vamos a crear una clase RecetasJDBC dentro del paquete modelJDBC y deberemos digitar el siguiente código:
+
+```java
+package modelJDBC;
+
+import connection.connectionSQLSERVER;
+import java.sql.Array;
+import java.sql.CallableStatement;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Types;
+import javax.swing.table.DefaultTableModel;
+
+/**
+ *
+ * @author seth
+ */
+public class RecetaJDBC {
+
+    CategoriaPorRecetaJDBC categoriaPorRecetaJDBC = new CategoriaPorRecetaJDBC();
+    IngredientesPorRecetaJDBC ingredientesPorRecetaJDBC = new IngredientesPorRecetaJDBC();
+
+    private final String SQL_INSERT_SP = "{CALL spAgregarReceta(?,?,?,?,?,?)}";
+
+    /**
+     * Método para registrar una nueva receta en la base de datos.
+     *
+     * @param nombre El nombre de la receta.
+     * @param descripcion La descripción de la receta.
+     * @param tiempoPreparacion El tiempo de preparación estimado de la receta
+     * en minutos.
+     * @param dificultad El nivel de dificultad de la receta.
+     * @param imagen Los datos de la imagen de la receta en formato de byte
+     * array.
+     * @param categorias Un arreglo bidimensional de objetos que contiene las
+     * categorías asociadas a la receta.
+     * @param ingredientes Un arreglo bidimensional de objetos que contiene los
+     * ingredientes asociados a la receta.
+     * @return El número de filas afectadas por la operación de inserción.
+     */
+    public int registrarReceta(String nombre, String descripcion, int tiempoPreparacion, int dificultad, byte[] imagen, Object[][] categorias, Object[][] ingredientes) {
+        // Objeto de conexión
+        Connection conn = null;
+        // prepareCall -> para realizar el llamado del procedimiento almacenado
+        CallableStatement cstmt = null;
+        int idReceta = 0;
+        int filaAfectadas = 0;
+
+        try {
+            conn = connectionSQLSERVER.getConnection(); // Se obtiene la conexion desde la clase Conexion SQL Server
+            cstmt = conn.prepareCall(SQL_INSERT_SP); // Se prepara la llamada al procedimiento 
+
+            // Se Sustituye los valores a enviar en el procedimiento almacenado
+            cstmt.setString(1, nombre);
+            cstmt.setString(2, descripcion);
+            cstmt.setInt(3, tiempoPreparacion);
+            cstmt.setInt(4, dificultad);
+            cstmt.setBytes(5, imagen);
+
+            // Definir el parámetro de salida para el ID de la receta
+            cstmt.registerOutParameter(6, Types.INTEGER);
+
+            // Se ejecuta la consulta
+            System.out.println("Ejecutando la Registro de Categoria");
+            cstmt.execute();
+            // Obtener el valor del parámetro de salida
+            idReceta = cstmt.getInt(6);
+
+            filaAfectadas = cstmt.getUpdateCount();
+
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        } finally {
+            connectionSQLSERVER.close(cstmt);
+            connectionSQLSERVER.close(conn);
+        }
+
+        if (idReceta != 0) {
+            categoriaPorRecetaJDBC.registrarCategoriaReceta(idReceta, categorias);
+
+            ingredientesPorRecetaJDBC.registrarIngredientesReceta(idReceta, ingredientes);
+        }
+
+        return idReceta;
+    }
+}
+
+```
+
+##### Clase PasosJDBC
 
 ### GUI
 

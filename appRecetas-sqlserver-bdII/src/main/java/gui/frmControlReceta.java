@@ -119,7 +119,7 @@ public class frmControlReceta extends javax.swing.JFrame {
 
         jLabel4.setText("Dificultad");
 
-        cmbDificultada.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Fácil", "Medio", "Difícil" }));
+        cmbDificultada.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Fácil", "Medio", "Difícil", "Extrema" }));
 
         jLabel5.setText("Descripción:");
 
@@ -445,7 +445,7 @@ public class frmControlReceta extends javax.swing.JFrame {
          // Si pasa todas las validaciones, continuar con el proceso de guardado
         int row = 0;
         if (nuevaReceta) {//
-            row = recetajdbc.registrarReceta(nombreReceta,descripcion,tiempoPreparacion,dificultada, datosImagen, categorias, ingredientes); //Llamar al metodo que encarga de registrar la categoria
+            row = recetajdbc.registrarReceta(nombreReceta,descripcion,tiempoPreparacion,dificultada, datosImagen, categorias, ingredientes); //Llamar al metodo que encarga de registrar la receta
 
             if (row > 0) {
                 JOptionPane.showMessageDialog(this, "Se Registro la receta");

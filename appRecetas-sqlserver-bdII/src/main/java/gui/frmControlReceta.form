@@ -165,10 +165,11 @@
         <Component class="javax.swing.JComboBox" name="cmbDificultada">
           <Properties>
             <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.editors2.ComboBoxModelEditor">
-              <StringArray count="3">
+              <StringArray count="4">
                 <StringItem index="0" value="F&#xe1;cil"/>
                 <StringItem index="1" value="Medio"/>
                 <StringItem index="2" value="Dif&#xed;cil"/>
+                <StringItem index="3" value="Extrema"/>
               </StringArray>
             </Property>
           </Properties>
